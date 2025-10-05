@@ -7,7 +7,8 @@ import { shipmentController } from '@/lib/controllers/ShipmentController';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  return shipmentController.markDelivered(request, params);
+  const { id } = await params;
+  return shipmentController.markDelivered(request, { id });
 }

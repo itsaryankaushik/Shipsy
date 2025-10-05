@@ -7,9 +7,10 @@ import { customerController } from '@/lib/controllers/CustomerController';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  return customerController.getById(request, params);
+  const { id } = await params;
+  return customerController.getById(request, { id });
 }
 
 /**
@@ -18,9 +19,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  return customerController.update(request, params);
+  const { id } = await params;
+  return customerController.update(request, { id });
 }
 
 /**
@@ -29,7 +31,8 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  return customerController.delete(request, params);
+  const { id } = await params;
+  return customerController.delete(request, { id });
 }
