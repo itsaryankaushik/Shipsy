@@ -92,10 +92,14 @@ export abstract class BaseService<T extends Record<string, any>, R extends BaseR
   /**
    * Error handler
    */
-  protected handleError(error: unknown, operation: string): Error {
+  protected handleError(error: unknown, operation: string): never {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Service error in ${operation}:`, message);
-    return new Error(`Service error in ${operation}: ${message}`);
+    // Re-throw the original error to preserve its message for controller handling
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(message);
   }
 
   /**

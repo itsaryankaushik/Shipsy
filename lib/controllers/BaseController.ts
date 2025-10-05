@@ -126,21 +126,32 @@ export abstract class BaseController {
     console.error(`Controller error in ${operation}:`, error);
 
     if (error instanceof Error) {
+      const message = error.message;
+      
       // Check for specific error messages
-      if (error.message.includes('not found')) {
-        return notFoundResponse(error.message);
+      if (message.includes('not found')) {
+        return notFoundResponse(message);
       }
-      if (error.message.includes('Unauthorized')) {
-        return unauthorizedResponse(error.message);
+      if (message.includes('Unauthorized') || message.includes('Authentication required')) {
+        return unauthorizedResponse(message);
       }
-      if (error.message.includes('already exists')) {
-        return errorResponse(error.message, 'CONFLICT', 409);
+      if (message.includes('Invalid email or password') || message.includes('Invalid credentials')) {
+        return unauthorizedResponse(message);
       }
-      if (error.message.includes('Validation')) {
-        return errorResponse(error.message, 'VALIDATION_ERROR', 400);
+      if (message.includes('Account is inactive')) {
+        return errorResponse(message, 'FORBIDDEN', 403);
+      }
+      if (message.includes('already exists')) {
+        return errorResponse(message, 'CONFLICT', 409);
+      }
+      if (message.includes('Validation')) {
+        return errorResponse(message, 'VALIDATION_ERROR', 400);
+      }
+      if (message.includes('Invalid JSON')) {
+        return errorResponse(message, 'VALIDATION_ERROR', 400);
       }
 
-      return internalErrorResponse(error.message, error);
+      return internalErrorResponse(message, error);
     }
 
     return internalErrorResponse('An unexpected error occurred');
