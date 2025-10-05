@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { listShipmentsSchema, createShipmentSchema, updateShipmentSchema, markDeliveredSchema } from '@/lib/validators';
+import { ZodError } from 'zod';
 
 interface Shipment {
   id: string;
@@ -64,6 +66,23 @@ export const useShipments = (initialFilters?: ShipmentFilters): UseShipmentsRetu
 
   // Fetch shipments with filters
   const fetchShipments = useCallback(async (filters?: ShipmentFilters) => {
+    // Client-side validation of filters
+    try {
+      if (filters) {
+        const parsed = {
+          ...filters,
+          page: filters.page ? String(filters.page) : undefined,
+          limit: filters.limit ? String(filters.limit) : undefined,
+        };
+        listShipmentsSchema.parse(parsed as any);
+      }
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors.map(e => e.message).join(', '));
+        return;
+      }
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -120,14 +139,54 @@ export const useShipments = (initialFilters?: ShipmentFilters): UseShipmentsRetu
 
   // Create shipment
   const createShipment = async (shipmentData: Omit<Shipment, 'id' | 'trackingNumber' | 'createdAt' | 'updatedAt'>): Promise<boolean> => {
+    // Client-side validation
+    try {
+      // normalize keys and values before validation: ensure enums are UPPERCASE, costs are strings
+      const normalizedForValidation: any = {
+        ...shipmentData,
+        startLocation: (shipmentData as any).origin ?? (shipmentData as any).startLocation,
+        endLocation: (shipmentData as any).destination ?? (shipmentData as any).endLocation,
+        type: ((shipmentData as any).type || '').toString().toUpperCase(),
+        mode: ((shipmentData as any).mode || '').toString().toUpperCase(),
+        cost: typeof (shipmentData as any).cost === 'number' ? (shipmentData as any).cost.toFixed(2) : (shipmentData as any).cost,
+        calculatedTotal: typeof (shipmentData as any).calculatedTotal === 'number' ? (shipmentData as any).calculatedTotal.toFixed(2) : (shipmentData as any).calculatedTotal ?? (typeof (shipmentData as any).cost === 'number' ? (shipmentData as any).cost.toFixed(2) : (shipmentData as any).cost),
+        deliveryDate: (shipmentData as any).estimatedDeliveryDate || (shipmentData as any).deliveryDate || undefined,
+      };
+      delete normalizedForValidation.origin;
+      delete normalizedForValidation.destination;
+
+      createShipmentSchema.parse(normalizedForValidation);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors.map(e => e.message).join(', '));
+        return false;
+      }
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
+      // Normalize values to the server-expected shape/types:
+      const payload: any = {
+        ...shipmentData,
+        startLocation: (shipmentData as any).origin ?? (shipmentData as any).startLocation,
+        endLocation: (shipmentData as any).destination ?? (shipmentData as any).endLocation,
+        // server expects enums in UPPERCASE
+        type: ((shipmentData as any).type || '').toString().toUpperCase(),
+        mode: ((shipmentData as any).mode || '').toString().toUpperCase(),
+        // server validates cost as string decimal
+        cost: typeof (shipmentData as any).cost === 'number' ? (shipmentData as any).cost.toFixed(2) : (shipmentData as any).cost,
+        calculatedTotal: typeof (shipmentData as any).calculatedTotal === 'number' ? (shipmentData as any).calculatedTotal.toFixed(2) : (shipmentData as any).calculatedTotal,
+        deliveryDate: (shipmentData as any).estimatedDeliveryDate || (shipmentData as any).deliveryDate || undefined,
+      };
+      delete payload.origin;
+      delete payload.destination;
+
       const response = await fetch('/api/shipments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(shipmentData),
+        body: JSON.stringify(payload),
         credentials: 'include',
       });
 
@@ -150,14 +209,50 @@ export const useShipments = (initialFilters?: ShipmentFilters): UseShipmentsRetu
 
   // Update shipment
   const updateShipment = async (id: string, updates: Partial<Shipment>): Promise<boolean> => {
+    // Client-side validation
+    try {
+      const normalizedForValidation: any = {
+        ...updates,
+        startLocation: (updates as any).origin ?? (updates as any).startLocation,
+        endLocation: (updates as any).destination ?? (updates as any).endLocation,
+        type: updates?.type ? (updates.type as any).toString().toUpperCase() : undefined,
+        mode: updates?.mode ? (updates.mode as any).toString().toUpperCase() : undefined,
+        cost: typeof (updates as any).cost === 'number' ? (updates as any).cost.toFixed(2) : (updates as any).cost,
+        calculatedTotal: typeof (updates as any).calculatedTotal === 'number' ? (updates as any).calculatedTotal.toFixed(2) : (updates as any).calculatedTotal ?? (typeof (updates as any).cost === 'number' ? (updates as any).cost.toFixed(2) : (updates as any).cost),
+        deliveryDate: (updates as any).estimatedDeliveryDate || (updates as any).deliveryDate || undefined,
+      };
+      delete normalizedForValidation.origin;
+      delete normalizedForValidation.destination;
+
+      updateShipmentSchema.parse(normalizedForValidation);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors.map(e => e.message).join(', '));
+        return false;
+      }
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
+      const payload: any = {
+        ...updates,
+        startLocation: (updates as any).origin ?? (updates as any).startLocation,
+        endLocation: (updates as any).destination ?? (updates as any).endLocation,
+        type: updates?.type ? (updates.type as any).toString().toUpperCase() : undefined,
+        mode: updates?.mode ? (updates.mode as any).toString().toUpperCase() : undefined,
+        cost: typeof (updates as any).cost === 'number' ? (updates as any).cost.toFixed(2) : (updates as any).cost,
+        calculatedTotal: typeof (updates as any).calculatedTotal === 'number' ? (updates as any).calculatedTotal.toFixed(2) : (updates as any).calculatedTotal,
+        deliveryDate: (updates as any).estimatedDeliveryDate || (updates as any).deliveryDate || undefined,
+      };
+      delete payload.origin;
+      delete payload.destination;
+
       const response = await fetch(`/api/shipments/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+        body: JSON.stringify(payload),
         credentials: 'include',
       });
 
@@ -208,6 +303,16 @@ export const useShipments = (initialFilters?: ShipmentFilters): UseShipmentsRetu
 
   // Mark as delivered
   const markDelivered = async (id: string, deliveryDate?: string): Promise<boolean> => {
+    // Client-side validation
+    try {
+      markDeliveredSchema.parse({ deliveryDate });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors.map(e => e.message).join(', '));
+        return false;
+      }
+    }
+
     try {
       setIsLoading(true);
       setError(null);

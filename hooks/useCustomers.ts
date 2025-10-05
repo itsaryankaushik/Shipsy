@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createCustomerSchema, updateCustomerSchema, listCustomersSchema, searchCustomerSchema } from '@/lib/validators';
+import { ZodError } from 'zod';
 
 interface Customer {
   id: string;
@@ -41,6 +43,23 @@ export const useCustomers = (initialFilters?: CustomerFilters): UseCustomersRetu
 
   // Fetch customers with pagination
   const fetchCustomers = useCallback(async (filters?: CustomerFilters) => {
+    // Validate query params client-side when provided
+    try {
+      if (filters) {
+        // transform filters to match expected string inputs used by schema
+        const parsed = {
+          page: filters.page ? String(filters.page) : undefined,
+          limit: filters.limit ? String(filters.limit) : undefined,
+        };
+        listCustomersSchema.parse(parsed);
+      }
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors.map(e => e.message).join(', '));
+        return;
+      }
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -76,6 +95,16 @@ export const useCustomers = (initialFilters?: CustomerFilters): UseCustomersRetu
 
   // Search customers
   const searchCustomers = useCallback(async (query: string) => {
+    // Client-side validation
+    try {
+      searchCustomerSchema.parse({ query });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors.map(e => e.message).join(', '));
+        return;
+      }
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -107,6 +136,16 @@ export const useCustomers = (initialFilters?: CustomerFilters): UseCustomersRetu
 
   // Create customer
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> => {
+    // Client-side validation
+    try {
+      createCustomerSchema.parse(customerData);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors.map(e => e.message).join(', '));
+        return false;
+      }
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -137,6 +176,16 @@ export const useCustomers = (initialFilters?: CustomerFilters): UseCustomersRetu
 
   // Update customer
   const updateCustomer = async (id: string, updates: Partial<Customer>): Promise<boolean> => {
+    // Client-side validation
+    try {
+      updateCustomerSchema.parse(updates);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors.map(e => e.message).join(', '));
+        return false;
+      }
+    }
+
     try {
       setIsLoading(true);
       setError(null);

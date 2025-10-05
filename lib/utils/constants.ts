@@ -7,8 +7,8 @@
 export const JWT_CONFIG = {
   ACCESS_TOKEN_SECRET: process.env.JWT_ACCESS_SECRET || 'your-access-token-secret-change-in-production',
   REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_SECRET || 'your-refresh-token-secret-change-in-production',
-  ACCESS_TOKEN_EXPIRY: '15m', // 15 minutes
-  REFRESH_TOKEN_EXPIRY: '7d', // 7 days
+  ACCESS_TOKEN_EXPIRY: '4h', // 4 hours
+  REFRESH_TOKEN_EXPIRY: '15d', // 15 days
   ALGORITHM: 'HS256' as const,
 };
 

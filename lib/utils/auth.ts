@@ -125,3 +125,108 @@ export function isTokenExpired(token: string): boolean {
   
   return decoded.exp * 1000 < Date.now();
 }
+
+/**
+ * Schedule automatic token refresh in the background
+ * Refreshes token 2 minutes before expiry
+ */
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function scheduleTokenRefresh(
+  accessToken: string,
+  onRefreshed: (newAccessToken?: string) => void
+): void {
+  try {
+    const decoded = decodeToken(accessToken);
+    if (!decoded || !decoded.exp) return;
+
+    // Refresh 2 minutes before expiry
+    const msUntilRefresh = decoded.exp * 1000 - Date.now() - 2 * 60 * 1000;
+    if (msUntilRefresh <= 0) {
+      // Token already near expiry, refresh now
+      refreshTokenInBackground(onRefreshed);
+      return;
+    }
+
+    // Clear any existing timer
+    if (refreshTimer) clearTimeout(refreshTimer);
+
+    // Schedule refresh
+    refreshTimer = setTimeout(() => {
+      refreshTokenInBackground(onRefreshed);
+    }, msUntilRefresh);
+  } catch (error) {
+    console.error('Error scheduling token refresh', error);
+  }
+}
+
+/**
+ * Cancel scheduled token refresh
+ */
+export function cancelTokenRefresh(): void {
+  if (refreshTimer) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
+/**
+ * Refresh token in background without page reload
+ */
+async function refreshTokenInBackground(
+  onRefreshed: (newAccessToken?: string) => void
+): Promise<void> {
+  try {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (response.ok) {
+      const json = await response.json();
+      const newAccessToken = json.data?.tokens?.accessToken;
+      onRefreshed(newAccessToken);
+
+      // Schedule next refresh if we got a new token
+      if (newAccessToken) {
+        scheduleTokenRefresh(newAccessToken, onRefreshed);
+      }
+    } else {
+      // Refresh failed, clear auth state
+      console.warn('Token refresh failed');
+      onRefreshed(undefined);
+    }
+  } catch (error) {
+    console.error('Error refreshing token', error);
+    onRefreshed(undefined);
+  }
+}
+
+/**
+ * Fetch wrapper with automatic token refresh on 401
+ * Use this instead of fetch for authenticated API calls
+ */
+export async function apiFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {}
+): Promise<Response> {
+  // Ensure credentials are included
+  init.credentials = 'include';
+
+  let response = await fetch(input, init);
+
+  // If unauthorized, try to refresh token and retry once
+  if (response.status === 401) {
+    const refreshResponse = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (refreshResponse.ok) {
+      // Retry original request with new token
+      response = await fetch(input, init);
+    }
+  }
+
+  return response;
+}
