@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout';
 import { Button, Input, LoadingSpinner, ErrorMessage } from '@/components/ui';
 import { useAuth } from '@/hooks';
+import { validateProfileForm } from '@/lib/utils/frontendValidation';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isLoading: authLoading, isAuthenticated, updateProfile } = useAuth();
+  const { user, isLoading: authLoading, isAuthenticated, updateProfile, error: authError } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,7 +17,6 @@ export default function ProfilePage() {
     phone: '',
   });
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
-  const [localError, setLocalError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -24,7 +24,7 @@ export default function ProfilePage() {
     if (!authLoading && !isAuthenticated) {
       router.replace('/login');
     }
-  }, [authLoading, isAuthenticated]); // Remove router from dependencies
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
     if (user) {
@@ -37,37 +37,26 @@ export default function ProfilePage() {
 
   const handleChange = (field: 'name' | 'phone', value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear field-specific error on change
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
-    if (localError) setLocalError(null);
     if (successMessage) setSuccessMessage(null);
-  };
-
-  const validate = (): boolean => {
-    const newErrors: { name?: string; phone?: string } = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-    }
-
-    if (formData.phone && !/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = 'Phone must be 10-15 digits (e.g., +1234567890)';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validate()) return;
+    // Client-side validation before API call
+    const validation = validateProfileForm(formData);
+    
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return; // Don't call API if validation fails
+    }
 
     setIsSubmitting(true);
-    setLocalError(null);
+    setErrors({});
     setSuccessMessage(null);
 
     const success = await updateProfile(formData);
@@ -77,9 +66,8 @@ export default function ProfilePage() {
     if (success) {
       setSuccessMessage('Profile updated successfully!');
       setIsEditing(false);
-    } else {
-      setLocalError('Failed to update profile. Please try again.');
     }
+    // Error is handled by useAuth and displayed via authError
   };
 
   const handleCancel = () => {
@@ -91,7 +79,6 @@ export default function ProfilePage() {
       });
     }
     setErrors({});
-    setLocalError(null);
     setSuccessMessage(null);
   };
 
@@ -128,9 +115,9 @@ export default function ProfilePage() {
           )}
 
           {/* Error Message */}
-          {localError && (
+          {authError && isEditing && (
             <div className="mb-6">
-              <ErrorMessage message={localError} />
+              <ErrorMessage message={authError} />
             </div>
           )}
 

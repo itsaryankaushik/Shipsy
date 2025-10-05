@@ -7,10 +7,13 @@ interface ShipmentFormData {
   customerId: string;
   origin: string;
   destination: string;
-  type: 'domestic' | 'international';
-  mode: 'air' | 'sea' | 'road' | 'rail';
+  // Use server enum labels directly in the form values
+  type: 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL';
+  mode: 'LAND' | 'AIR' | 'WATER';
   weight: number;
-  cost: number;
+    cost: number;
+    taxPercent: number;
+    calculatedTotal: number; // total after taxes
   estimatedDeliveryDate: string;
 }
 
@@ -33,25 +36,28 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
     customerId: initialData?.customerId || '',
     origin: initialData?.origin || '',
     destination: initialData?.destination || '',
-    type: initialData?.type || 'domestic',
-    mode: initialData?.mode || 'road',
+  // normalize any incoming initialData values to server enum labels (UPPERCASE)
+  type: (initialData?.type ? (initialData.type as any).toString().toUpperCase() : 'LOCAL') as 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL',
+  mode: (initialData?.mode ? (initialData.mode as any).toString().toUpperCase() : 'LAND') as 'LAND' | 'AIR' | 'WATER',
     weight: initialData?.weight || 0,
     cost: initialData?.cost || 0,
+    taxPercent: initialData?.taxPercent || 0,
+    calculatedTotal: initialData?.calculatedTotal || 0,
     estimatedDeliveryDate: initialData?.estimatedDeliveryDate || '',
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof ShipmentFormData, string>>>({});
 
   const typeOptions: SelectOption[] = [
-    { value: 'domestic', label: 'Domestic' },
-    { value: 'international', label: 'International' },
+    { value: 'LOCAL', label: 'Local (Domestic)' },
+    { value: 'NATIONAL', label: 'National' },
+    { value: 'INTERNATIONAL', label: 'International' },
   ];
 
   const modeOptions: SelectOption[] = [
-    { value: 'air', label: 'Air' },
-    { value: 'sea', label: 'Sea' },
-    { value: 'road', label: 'Road' },
-    { value: 'rail', label: 'Rail' },
+    { value: 'AIR', label: 'Air' },
+    { value: 'WATER', label: 'Sea / Water' },
+    { value: 'LAND', label: 'Land (Road / Rail)' },
   ];
 
   const customerOptions: SelectOption[] = customers.map((customer) => ({
@@ -60,7 +66,16 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
   }));
 
   const handleChange = (field: keyof ShipmentFormData, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value } as ShipmentFormData;
+      // Recalculate total when cost or taxPercent change
+      if (field === 'cost' || field === 'taxPercent') {
+        const cost = Number(next.cost) || 0;
+        const tax = Number(next.taxPercent) || 0;
+        next.calculatedTotal = parseFloat((cost * (1 + tax / 100)).toFixed(2));
+      }
+      return next;
+    });
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -76,6 +91,8 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
     if (formData.weight <= 0) newErrors.weight = 'Weight must be greater than 0';
     if (formData.cost <= 0) newErrors.cost = 'Cost must be greater than 0';
     if (!formData.estimatedDeliveryDate) newErrors.estimatedDeliveryDate = 'Estimated delivery date is required';
+  // calculatedTotal must be present and >= cost
+  if (formData.calculatedTotal <= 0) newErrors.calculatedTotal = 'Calculated total is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -86,7 +103,20 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
     
     if (!validate()) return;
 
-    await onSubmit(formData);
+    // Build payload: do not send taxPercent, only calculatedTotal as 'calculatedTotal'
+    const payload: any = {
+      customerId: formData.customerId,
+      origin: formData.origin,
+      destination: formData.destination,
+      type: formData.type,
+      mode: formData.mode,
+      weight: formData.weight,
+      cost: formData.cost,
+      calculatedTotal: formData.calculatedTotal,
+      estimatedDeliveryDate: formData.estimatedDeliveryDate,
+    };
+
+    await onSubmit(payload);
   };
 
   return (
@@ -106,7 +136,7 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
           label="Type"
           options={typeOptions}
           value={formData.type}
-          onChange={(e) => handleChange('type', e.target.value as 'domestic' | 'international')}
+          onChange={(e) => handleChange('type', e.target.value as 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL')}
           fullWidth
           required
         />
@@ -137,7 +167,7 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
           label="Mode"
           options={modeOptions}
           value={formData.mode}
-          onChange={(e) => handleChange('mode', e.target.value as 'air' | 'sea' | 'road' | 'rail')}
+          onChange={(e) => handleChange('mode', e.target.value as 'LAND' | 'AIR' | 'WATER')}
           fullWidth
           required
         />
@@ -166,6 +196,33 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
           step="0.01"
           fullWidth
           required
+        />
+
+        <Input
+          label="Tax %"
+          type="number"
+          value={formData.taxPercent}
+          onChange={(e) => handleChange('taxPercent', parseFloat(e.target.value) || 0)}
+          error={errors.taxPercent}
+          placeholder="Tax percent (e.g., 5.00)"
+          min="0"
+          step="0.01"
+          fullWidth
+          required
+        />
+
+        <Input
+          label="Total after Taxes ($)"
+          type="number"
+          value={formData.calculatedTotal}
+          onChange={() => {}}
+          error={errors.calculatedTotal}
+          placeholder="Calculated total"
+          min="0"
+          step="0.01"
+          fullWidth
+          required
+          disabled
         />
 
         <Input

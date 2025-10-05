@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Input, ErrorMessage, LoadingSpinner } from '@/components/ui';
 import { useAuth } from '@/hooks';
+import { validateRegisterForm } from '@/lib/utils/frontendValidation';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,77 +20,49 @@ export default function RegisterPage() {
   });
   
   const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({});
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       router.replace('/dashboard');
     }
-  }, [authLoading, isAuthenticated]); // Remove router from dependencies
+  }, [authLoading, isAuthenticated, router]);
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear field-specific error on change
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
-    if (localError) setLocalError(null);
-  };
-
-  const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof typeof formData, string>> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone is required';
-    } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = 'Phone must be 10-15 digits (e.g., +1234567890)';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Password must contain uppercase, lowercase, and number';
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validate()) return;
+    // Client-side validation before API call
+    const validation = validateRegisterForm(formData);
+    
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return; // Don't call API if validation fails
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
 
     try {
       const { confirmPassword, ...registerData } = formData;
       const success = await register(registerData);
       
       if (success) {
-        // Redirect to dashboard after successful registration
         router.push('/dashboard');
-      } else {
-        setLocalError(authError || 'Registration failed. Please try again.');
       }
+      // Error is handled by useAuth hook and displayed via authError
     } catch (error) {
-      setLocalError('An unexpected error occurred. Please try again.');
+      console.error('Register error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -196,8 +169,8 @@ export default function RegisterPage() {
             />
           </div>
 
-          {(localError || authError) && (
-            <ErrorMessage message={localError || authError || 'An error occurred'} />
+          {authError && (
+            <ErrorMessage message={authError} />
           )}
 
           <div>
@@ -206,9 +179,10 @@ export default function RegisterPage() {
               variant="primary"
               size="lg"
               fullWidth
-              isLoading={isLoading}
+              isLoading={isSubmitting || isLoading}
+              disabled={isSubmitting || isLoading}
             >
-              Create account
+              {isSubmitting || isLoading ? 'Creating account...' : 'Create account'}
             </Button>
           </div>
         </form>
