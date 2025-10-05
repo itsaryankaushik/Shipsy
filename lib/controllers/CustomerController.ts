@@ -5,7 +5,7 @@ import {
   createCustomerSchema,
   updateCustomerSchema,
   listCustomersSchema,
-  searchCustomersSchema,
+  searchCustomerSchema,
   bulkDeleteCustomersSchema,
 } from '@/lib/validators/customer.validator';
 
@@ -28,26 +28,21 @@ class CustomerController extends BaseController {
         return auth.response!;
       }
 
-      // Get and validate query params
+      // Get query params manually (Zod schema has pipeline transforms)
       const params = this.getQueryParams(request);
-      const validation = this.validateBody(listCustomersSchema, params);
+      const page = params.page ? parseInt(params.page, 10) : 1;
+      const limit = Math.min(params.limit ? parseInt(params.limit, 10) : 20, 100);
 
-      if (!validation.valid) {
-        return validation.response!;
-      }
+      // Get customers with pagination - service throws on error
+      const result = await customerService.getCustomersByUser(auth.user!.userId, {
+        page,
+        limit,
+        search: params.search,
+        sortBy: params.sortBy || 'createdAt',
+        sortOrder: (params.sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc',
+      });
 
-      // Get customers with pagination
-      const result = await customerService.getCustomersByUser(
-        auth.user!.userId,
-        validation.data.page,
-        validation.data.limit
-      );
-
-      if (!result.success) {
-        return this.error(result.message, result.code, 400);
-      }
-
-      return this.success(result.data, 'Customers retrieved successfully');
+      return this.success(result, 'Customers retrieved successfully');
     } catch (error) {
       return this.handleError(error, 'list customers');
     }
@@ -67,20 +62,17 @@ class CustomerController extends BaseController {
         return auth.response!;
       }
 
-      // Get customer
-      const result = await customerService.getCustomerById(
+      // Get customer - service throws on error
+      const customer = await customerService.getCustomerById(
         params.id,
         auth.user!.userId
       );
 
-      if (!result.success) {
-        if (result.code === 'NOT_FOUND') {
-          return this.notFound(result.message);
-        }
-        return this.error(result.message, result.code, 400);
+      if (!customer) {
+        return this.notFound('Customer not found');
       }
 
-      return this.success(result.data, 'Customer retrieved successfully');
+      return this.success(customer, 'Customer retrieved successfully');
     } catch (error) {
       return this.handleError(error, 'get customer');
     }
@@ -108,20 +100,12 @@ class CustomerController extends BaseController {
         return validation.response!;
       }
 
-      // Create customer
-      const result = await customerService.createCustomer(
-        validation.data,
-        auth.user!.userId
-      );
+      const data = validation.data!;
 
-      if (!result.success) {
-        if (result.code === 'ALREADY_EXISTS') {
-          return this.error(result.message, result.code, 409);
-        }
-        return this.error(result.message, result.code, 400);
-      }
+      // Create customer - service throws on error
+      const customer = await customerService.createCustomer(auth.user!.userId, data);
 
-      const response = this.success(result.data, 'Customer created successfully');
+      const response = this.success(customer, 'Customer created successfully');
       return NextResponse.json(response, { status: 201 });
     } catch (error) {
       return this.handleError(error, 'create customer');
@@ -153,24 +137,16 @@ class CustomerController extends BaseController {
         return validation.response!;
       }
 
-      // Update customer
-      const result = await customerService.updateCustomer(
+      const data = validation.data!;
+
+      // Update customer - service throws on error
+      const customer = await customerService.updateCustomer(
         params.id,
-        validation.data,
-        auth.user!.userId
+        auth.user!.userId,
+        data
       );
 
-      if (!result.success) {
-        if (result.code === 'NOT_FOUND') {
-          return this.notFound(result.message);
-        }
-        if (result.code === 'ALREADY_EXISTS') {
-          return this.error(result.message, result.code, 409);
-        }
-        return this.error(result.message, result.code, 400);
-      }
-
-      return this.success(result.data, 'Customer updated successfully');
+      return this.success(customer, 'Customer updated successfully');
     } catch (error) {
       return this.handleError(error, 'update customer');
     }
@@ -190,18 +166,8 @@ class CustomerController extends BaseController {
         return auth.response!;
       }
 
-      // Delete customer
-      const result = await customerService.deleteCustomer(
-        params.id,
-        auth.user!.userId
-      );
-
-      if (!result.success) {
-        if (result.code === 'NOT_FOUND') {
-          return this.notFound(result.message);
-        }
-        return this.error(result.message, result.code, 400);
-      }
+      // Delete customer - service throws on error
+      await customerService.deleteCustomer(params.id, auth.user!.userId);
 
       return this.success(null, 'Customer deleted successfully');
     } catch (error) {
@@ -225,25 +191,21 @@ class CustomerController extends BaseController {
 
       // Get and validate query params
       const params = this.getQueryParams(request);
-      const validation = this.validateBody(searchCustomersSchema, params);
+      const validation = this.validateBody(searchCustomerSchema, params);
 
       if (!validation.valid) {
         return validation.response!;
       }
 
-      // Search customers
-      const result = await customerService.searchCustomers(
+      const data = validation.data!;
+
+      // Search customers - service throws on error
+      const customers = await customerService.searchCustomers(
         auth.user!.userId,
-        validation.data.query,
-        validation.data.page,
-        validation.data.limit
+        data.query
       );
 
-      if (!result.success) {
-        return this.error(result.message, result.code, 400);
-      }
-
-      return this.success(result.data, 'Search completed successfully');
+      return this.success(customers, 'Search completed successfully');
     } catch (error) {
       return this.handleError(error, 'search customers');
     }
@@ -263,15 +225,11 @@ class CustomerController extends BaseController {
         return auth.response!;
       }
 
-      // Get customer count
-      const result = await customerService.getCustomerCount(auth.user!.userId);
-
-      if (!result.success) {
-        return this.error(result.message, result.code, 400);
-      }
+      // Get customer count - service throws on error
+      const count = await customerService.getCustomerCount(auth.user!.userId);
 
       return this.success(
-        { totalCustomers: result.data },
+        { totalCustomers: count },
         'Statistics retrieved successfully'
       );
     } catch (error) {
@@ -301,19 +259,17 @@ class CustomerController extends BaseController {
         return validation.response!;
       }
 
-      // Bulk delete
-      const result = await customerService.bulkDeleteCustomers(
-        validation.data.ids,
+      const data = validation.data!;
+
+      // Bulk delete - service throws on error
+      const deletedCount = await customerService.bulkDeleteCustomers(
+        data.ids,
         auth.user!.userId
       );
 
-      if (!result.success) {
-        return this.error(result.message, result.code, 400);
-      }
-
       return this.success(
-        { deleted: result.data },
-        `Successfully deleted ${result.data} customer(s)`
+        { deleted: deletedCount },
+        `Successfully deleted ${deletedCount} customer(s)`
       );
     } catch (error) {
       return this.handleError(error, 'bulk delete customers');

@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { JWT_CONFIG, BCRYPT_CONFIG } from './constants';
 import { JWTPayload, AuthTokens } from '@/types/api.types';
 
@@ -31,8 +31,7 @@ export async function verifyPassword(
 export function generateAccessToken(payload: JWTPayload): string {
   return jwt.sign(payload, JWT_CONFIG.ACCESS_TOKEN_SECRET, {
     expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRY,
-    algorithm: JWT_CONFIG.ALGORITHM,
-  });
+  } as SignOptions);
 }
 
 /**
@@ -44,8 +43,7 @@ export function generateRefreshToken(payload: JWTPayload): string {
     JWT_CONFIG.REFRESH_TOKEN_SECRET,
     {
       expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRY,
-      algorithm: JWT_CONFIG.ALGORITHM,
-    }
+    } as SignOptions
   );
 }
 

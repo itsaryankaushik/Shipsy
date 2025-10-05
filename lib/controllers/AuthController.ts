@@ -31,29 +31,27 @@ class AuthController extends BaseController {
         return validation.response!;
       }
 
-      // Register user
-      const result = await userService.register(validation.data);
+      const data = validation.data!;
 
-      if (!result.success) {
-        return this.error(result.message, result.code, 400);
-      }
+      // Register user - service throws on error
+      const result = await userService.register(data);
 
       // Create response with cookies
       const response = this.success(
         {
-          user: result.data!.user,
-          tokens: result.data!.tokens,
+          user: result.user,
+          tokens: result.tokens,
         },
         'User registered successfully'
       );
 
       // Set HTTP-only cookies
       const nextResponse = NextResponse.json(response, { status: 201 });
-      nextResponse.cookies.set('access_token', result.data!.tokens.accessToken, {
+      nextResponse.cookies.set('access_token', result.tokens.accessToken, {
         ...COOKIE_OPTIONS,
         maxAge: 15 * 60, // 15 minutes
       });
-      nextResponse.cookies.set('refresh_token', result.data!.tokens.refreshToken, {
+      nextResponse.cookies.set('refresh_token', result.tokens.refreshToken, {
         ...COOKIE_OPTIONS,
         maxAge: 7 * 24 * 60 * 60, // 7 days
       });
@@ -80,28 +78,26 @@ class AuthController extends BaseController {
         return validation.response!;
       }
 
-      // Login user
-      const result = await userService.login(validation.data);
+      const data = validation.data!;
 
-      if (!result.success) {
-        return this.error(result.message, result.code, 401);
-      }
+      // Login user - service throws on error
+      const result = await userService.login(data);
 
       // Create response with cookies
       const response = this.success(
         {
-          user: result.data!.user,
-          tokens: result.data!.tokens,
+          user: result.user,
+          tokens: result.tokens,
         },
         'Login successful'
       );
 
       const nextResponse = NextResponse.json(response);
-      nextResponse.cookies.set('access_token', result.data!.tokens.accessToken, {
+      nextResponse.cookies.set('access_token', result.tokens.accessToken, {
         ...COOKIE_OPTIONS,
         maxAge: 15 * 60,
       });
-      nextResponse.cookies.set('refresh_token', result.data!.tokens.refreshToken, {
+      nextResponse.cookies.set('refresh_token', result.tokens.refreshToken, {
         ...COOKIE_OPTIONS,
         maxAge: 7 * 24 * 60 * 60,
       });
@@ -147,14 +143,14 @@ class AuthController extends BaseController {
         return auth.response!;
       }
 
-      // Get user details
-      const result = await userService.getUserById(auth.user!.userId);
+      // Get user details - service throws on error
+      const user = await userService.getUserById(auth.user!.userId);
 
-      if (!result.success) {
-        return this.notFound(result.message);
+      if (!user) {
+        return this.notFound('User not found');
       }
 
-      return this.success(result.data, 'User retrieved successfully');
+      return this.success(user, 'User retrieved successfully');
     } catch (error) {
       return this.handleError(error, 'me');
     }
@@ -182,14 +178,12 @@ class AuthController extends BaseController {
         return validation.response!;
       }
 
-      // Update profile
-      const result = await userService.updateProfile(auth.user!.userId, validation.data);
+      const data = validation.data!;
 
-      if (!result.success) {
-        return this.error(result.message, result.code, 400);
-      }
+      // Update profile - service throws on error
+      const user = await userService.updateProfile(auth.user!.userId, data);
 
-      return this.success(result.data, 'Profile updated successfully');
+      return this.success(user, 'Profile updated successfully');
     } catch (error) {
       return this.handleError(error, 'updateProfile');
     }
@@ -217,16 +211,13 @@ class AuthController extends BaseController {
         return validation.response!;
       }
 
-      // Change password
-      const result = await userService.changePassword(
-        auth.user!.userId,
-        validation.data.currentPassword,
-        validation.data.newPassword
-      );
+      const data = validation.data!;
 
-      if (!result.success) {
-        return this.error(result.message, result.code, 400);
-      }
+      // Change password - service throws on error
+      await userService.changePassword(auth.user!.userId, {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
 
       return this.success(null, 'Password changed successfully');
     } catch (error) {
@@ -254,17 +245,17 @@ class AuthController extends BaseController {
         return this.unauthorized('Refresh token required');
       }
 
-      // Verify refresh token
-      const result = await userService.verifyAndGetUser(refreshToken);
+      // Verify refresh token - service throws on error
+      const user = await userService.verifyAndGetUser(refreshToken);
 
-      if (!result.success || !result.data) {
+      if (!user) {
         return this.unauthorized('Invalid refresh token');
       }
 
       // Generate new tokens
       const tokens = generateAuthTokens({
-        userId: result.data.id,
-        email: result.data.email,
+        userId: user.id,
+        email: user.email,
       });
 
       // Create response with new cookies
