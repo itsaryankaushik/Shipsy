@@ -21,3 +21,5 @@ export type { LoadingSpinnerProps } from './LoadingSpinner';
 
 export { default as ErrorMessage } from './ErrorMessage';
 export type { ErrorMessageProps } from './ErrorMessage';
+
+export { PageLoader } from './PageLoader';

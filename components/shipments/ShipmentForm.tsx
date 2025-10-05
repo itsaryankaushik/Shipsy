@@ -1,20 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Input, Select, SelectOption } from '../ui';
 
 interface ShipmentFormData {
   customerId: string;
-  origin: string;
-  destination: string;
+  startLocation: string;
+  endLocation: string;
   // Use server enum labels directly in the form values
   type: 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL';
   mode: 'LAND' | 'AIR' | 'WATER';
-  weight: number;
-    cost: number;
-    taxPercent: number;
-    calculatedTotal: number; // total after taxes
-  estimatedDeliveryDate: string;
+  cost: number;
+  taxPercent: number;
+  calculatedTotal: number; // total after taxes
+  deliveryDate: string; // YYYY-MM-DD format for date input
 }
 
 export interface ShipmentFormProps {
@@ -32,21 +31,47 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
   onCancel,
   isLoading = false,
 }) => {
-  const [formData, setFormData] = useState<ShipmentFormData>({
+  // Helper to format date for input (convert ISO to YYYY-MM-DD)
+  const formatDateForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      return date.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  // Helper to calculate tax percent from cost and total
+  const calculateTaxPercent = (cost: number, total: number): number => {
+    if (cost <= 0) return 0;
+    return parseFloat((((total - cost) / cost) * 100).toFixed(2));
+  };
+
+  const getInitialFormData = (): ShipmentFormData => ({
     customerId: initialData?.customerId || '',
-    origin: initialData?.origin || '',
-    destination: initialData?.destination || '',
-  // normalize any incoming initialData values to server enum labels (UPPERCASE)
-  type: (initialData?.type ? (initialData.type as any).toString().toUpperCase() : 'LOCAL') as 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL',
-  mode: (initialData?.mode ? (initialData.mode as any).toString().toUpperCase() : 'LAND') as 'LAND' | 'AIR' | 'WATER',
-    weight: initialData?.weight || 0,
-    cost: initialData?.cost || 0,
-    taxPercent: initialData?.taxPercent || 0,
-    calculatedTotal: initialData?.calculatedTotal || 0,
-    estimatedDeliveryDate: initialData?.estimatedDeliveryDate || '',
+    startLocation: (initialData as any)?.startLocation || '',
+    endLocation: (initialData as any)?.endLocation || '',
+    // normalize any incoming initialData values to server enum labels (UPPERCASE)
+    type: (initialData?.type ? (initialData.type as any).toString().toUpperCase() : 'LOCAL') as 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL',
+    mode: (initialData?.mode ? (initialData.mode as any).toString().toUpperCase() : 'LAND') as 'LAND' | 'AIR' | 'WATER',
+    cost: initialData?.cost ? parseFloat(initialData.cost.toString()) : 0,
+    taxPercent: initialData?.cost && initialData?.calculatedTotal 
+      ? calculateTaxPercent(parseFloat(initialData.cost.toString()), parseFloat(initialData.calculatedTotal.toString()))
+      : 0,
+    calculatedTotal: initialData?.calculatedTotal ? parseFloat(initialData.calculatedTotal.toString()) : 0,
+    deliveryDate: formatDateForInput((initialData as any)?.deliveryDate),
   });
 
+  const [formData, setFormData] = useState<ShipmentFormData>(getInitialFormData());
   const [errors, setErrors] = useState<Partial<Record<keyof ShipmentFormData, string>>>({});
+
+  // Update form when initialData changes (for edit mode)
+  useEffect(() => {
+    setFormData(getInitialFormData());
+    setErrors({});
+  }, [initialData]);
 
   const typeOptions: SelectOption[] = [
     { value: 'LOCAL', label: 'Local (Domestic)' },
@@ -86,13 +111,12 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
     const newErrors: Partial<Record<keyof ShipmentFormData, string>> = {};
 
     if (!formData.customerId) newErrors.customerId = 'Customer is required';
-    if (!formData.origin.trim()) newErrors.origin = 'Origin is required';
-    if (!formData.destination.trim()) newErrors.destination = 'Destination is required';
-    if (formData.weight <= 0) newErrors.weight = 'Weight must be greater than 0';
+    if (!formData.startLocation.trim()) newErrors.startLocation = 'Start location is required';
+    if (!formData.endLocation.trim()) newErrors.endLocation = 'End location is required';
     if (formData.cost <= 0) newErrors.cost = 'Cost must be greater than 0';
-    if (!formData.estimatedDeliveryDate) newErrors.estimatedDeliveryDate = 'Estimated delivery date is required';
-  // calculatedTotal must be present and >= cost
-  if (formData.calculatedTotal <= 0) newErrors.calculatedTotal = 'Calculated total is required';
+    if (!formData.deliveryDate) newErrors.deliveryDate = 'Delivery date is required';
+    // calculatedTotal must be present and >= cost
+    if (formData.calculatedTotal <= 0) newErrors.calculatedTotal = 'Calculated total is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -103,17 +127,16 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
     
     if (!validate()) return;
 
-    // Build payload: do not send taxPercent, only calculatedTotal as 'calculatedTotal'
+    // Build payload: use correct field names for API
     const payload: any = {
       customerId: formData.customerId,
-      origin: formData.origin,
-      destination: formData.destination,
+      startLocation: formData.startLocation,
+      endLocation: formData.endLocation,
       type: formData.type,
       mode: formData.mode,
-      weight: formData.weight,
-      cost: formData.cost,
-      calculatedTotal: formData.calculatedTotal,
-      estimatedDeliveryDate: formData.estimatedDeliveryDate,
+      cost: formData.cost.toString(),
+      calculatedTotal: formData.calculatedTotal.toString(),
+      deliveryDate: formData.deliveryDate, // Send as YYYY-MM-DD, API will handle conversion
     };
 
     await onSubmit(payload);
@@ -142,23 +165,23 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
         />
 
         <Input
-          label="Origin"
+          label="Start Location"
           type="text"
-          value={formData.origin}
-          onChange={(e) => handleChange('origin', e.target.value)}
-          error={errors.origin}
-          placeholder="Enter origin city"
+          value={formData.startLocation}
+          onChange={(e) => handleChange('startLocation', e.target.value)}
+          error={errors.startLocation}
+          placeholder="Enter start location"
           fullWidth
           required
         />
 
         <Input
-          label="Destination"
+          label="End Location"
           type="text"
-          value={formData.destination}
-          onChange={(e) => handleChange('destination', e.target.value)}
-          error={errors.destination}
-          placeholder="Enter destination city"
+          value={formData.endLocation}
+          onChange={(e) => handleChange('endLocation', e.target.value)}
+          error={errors.endLocation}
+          placeholder="Enter end location"
           fullWidth
           required
         />
@@ -173,14 +196,11 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
         />
 
         <Input
-          label="Weight (kg)"
-          type="number"
-          value={formData.weight}
-          onChange={(e) => handleChange('weight', parseFloat(e.target.value) || 0)}
-          error={errors.weight}
-          placeholder="Enter weight"
-          min="0"
-          step="0.01"
+          label="Delivery Date"
+          type="date"
+          value={formData.deliveryDate}
+          onChange={(e) => handleChange('deliveryDate', e.target.value)}
+          error={errors.deliveryDate}
           fullWidth
           required
         />
@@ -223,16 +243,6 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
           fullWidth
           required
           disabled
-        />
-
-        <Input
-          label="Estimated Delivery Date"
-          type="date"
-          value={formData.estimatedDeliveryDate}
-          onChange={(e) => handleChange('estimatedDeliveryDate', e.target.value)}
-          error={errors.estimatedDeliveryDate}
-          fullWidth
-          required
         />
       </div>
 

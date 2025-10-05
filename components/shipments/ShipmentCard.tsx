@@ -8,8 +8,8 @@ interface Shipment {
   trackingNumber: string;
   origin: string;
   destination: string;
-  type: 'domestic' | 'international';
-  mode: 'air' | 'sea' | 'road' | 'rail';
+  type: 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL';
+  mode: 'AIR' | 'WATER' | 'LAND';
   isDelivered: boolean;
   estimatedDeliveryDate: string;
   deliveryDate?: string | null;
@@ -31,15 +31,16 @@ const ShipmentCard: React.FC<ShipmentCardProps> = ({
   onMarkDelivered,
 }) => {
   const getTypeColor = (type: string) => {
-    return type === 'domestic' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
+    if (type === 'LOCAL') return 'bg-blue-100 text-blue-800';
+    if (type === 'NATIONAL') return 'bg-green-100 text-green-800';
+    return 'bg-purple-100 text-purple-800'; // INTERNATIONAL
   };
 
   const getModeIcon = (mode: string) => {
     const icons = {
-      air: '✈️',
-      sea: '🚢',
-      road: '🚚',
-      rail: '🚂',
+      AIR: '✈️',
+      WATER: '🚢',
+      LAND: '🚚',
     };
     return icons[mode as keyof typeof icons] || '📦';
   };

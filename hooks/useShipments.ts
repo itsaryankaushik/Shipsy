@@ -10,8 +10,8 @@ interface Shipment {
   customerId: string;
   origin: string;
   destination: string;
-  type: 'domestic' | 'international';
-  mode: 'air' | 'sea' | 'road' | 'rail';
+  type: 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL';
+  mode: 'AIR' | 'WATER' | 'LAND';
   weight: number;
   cost: number;
   isDelivered: boolean;
@@ -22,8 +22,8 @@ interface Shipment {
 }
 
 interface ShipmentFilters {
-  type?: 'domestic' | 'international';
-  mode?: 'air' | 'sea' | 'road' | 'rail';
+  type?: 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL';
+  mode?: 'AIR' | 'WATER' | 'LAND';
   isDelivered?: boolean;
   startDate?: string;
   endDate?: string;
@@ -32,13 +32,14 @@ interface ShipmentFilters {
 }
 
 interface ShipmentStats {
-  total: number;
-  pending: number;
-  delivered: number;
+  totalShipments: number;
+  pendingShipments: number;
+  deliveredShipments: number;
   totalRevenue: number;
   averageCost: number;
-  byType: { domestic: number; international: number };
-  byMode: { air: number; sea: number; road: number; rail: number };
+  byType: Record<string, number>;
+  byMode: Record<string, number>;
+  recentShipments?: any[];
 }
 
 interface UseShipmentsReturn {

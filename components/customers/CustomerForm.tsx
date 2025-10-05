@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Input, Textarea } from '../ui';
 
 interface CustomerFormData {
@@ -23,14 +23,21 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   onCancel,
   isLoading = false,
 }) => {
-  const [formData, setFormData] = useState<CustomerFormData>({
+  const getInitialFormData = (): CustomerFormData => ({
     name: initialData?.name || '',
     email: initialData?.email || '',
     phone: initialData?.phone || '',
     address: initialData?.address || '',
   });
 
+  const [formData, setFormData] = useState<CustomerFormData>(getInitialFormData());
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData, string>>>({});
+
+  // Update form when initialData changes (for edit mode)
+  useEffect(() => {
+    setFormData(getInitialFormData());
+    setErrors({});
+  }, [initialData]);
 
   const handleChange = (field: keyof CustomerFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

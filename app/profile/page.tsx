@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout';
-import { Button, Input, LoadingSpinner, ErrorMessage } from '@/components/ui';
+import { Button, Input, PageLoader, ErrorMessage } from '@/components/ui';
 import { useAuth } from '@/hooks';
 import { validateProfileForm } from '@/lib/utils/frontendValidation';
 
@@ -83,11 +83,7 @@ export default function ProfilePage() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="xl" text="Loading..." />
-      </div>
-    );
+    return <PageLoader text="Loading profile..." />;
   }
 
   if (!isAuthenticated || !user) {

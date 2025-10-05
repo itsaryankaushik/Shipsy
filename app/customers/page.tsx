@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout';
-import { CustomerCard, CustomerForm } from '@/components/customers';
-import { Button, LoadingSpinner, ErrorMessage, Pagination, SearchBar } from '@/components/ui';
+import { CustomerCard } from '@/components/customers';
+import { Button, PageLoader, LoadingSpinner, ErrorMessage, Pagination, SearchBar } from '@/components/ui';
 import { useAuth, useCustomers } from '@/hooks';
+
+// Lazy load heavy form component
+const CustomerForm = lazy(() => import('@/components/customers/CustomerForm'));
 
 export default function CustomersPage() {
   const router = useRouter();
@@ -20,10 +23,12 @@ export default function CustomersPage() {
     fetchCustomers,
     searchCustomers,
     createCustomer,
+    updateCustomer,
     deleteCustomer 
   } = useCustomers({ page: 1, limit: 9 });
 
   const [showForm, setShowForm] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -57,10 +62,24 @@ export default function CustomersPage() {
     fetchCustomers({ page, limit: 9 });
   };
 
-  const handleCreateCustomer = async (data: any) => {
-    const success = await createCustomer(data);
+  const handleSubmitCustomer = async (data: any) => {
+    let success;
+    if (editingCustomer) {
+      success = await updateCustomer(editingCustomer.id, data);
+    } else {
+      success = await createCustomer(data);
+    }
     if (success) {
       setShowForm(false);
+      setEditingCustomer(null);
+    }
+  };
+
+  const handleEditCustomer = (id: string) => {
+    const customer = customers.find(c => c.id === id);
+    if (customer) {
+      setEditingCustomer(customer);
+      setShowForm(true);
     }
   };
 
@@ -71,11 +90,7 @@ export default function CustomersPage() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="xl" text="Loading..." />
-      </div>
-    );
+    return <PageLoader text="Loading customers..." />;
   }
 
   if (!isAuthenticated) {
@@ -93,20 +108,35 @@ export default function CustomersPage() {
               Manage your customers ({totalCustomers} total)
             </p>
           </div>
-          <Button variant="primary" onClick={() => setShowForm(!showForm)}>
+          <Button variant="primary" onClick={() => {
+            if (showForm) {
+              setShowForm(false);
+              setEditingCustomer(null);
+            } else {
+              setShowForm(true);
+            }
+          }}>
             {showForm ? 'Cancel' : '+ New Customer'}
           </Button>
         </div>
 
-        {/* Create Form */}
+        {/* Create/Edit Form */}
         {showForm && (
           <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Create New Customer</h2>
-            <CustomerForm
-              onSubmit={handleCreateCustomer}
-              onCancel={() => setShowForm(false)}
-              isLoading={isLoading}
-            />
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              {editingCustomer ? 'Edit Customer' : 'Create New Customer'}
+            </h2>
+            <Suspense fallback={<LoadingSpinner size="md" />}>
+              <CustomerForm
+                initialData={editingCustomer}
+                onSubmit={handleSubmitCustomer}
+                onCancel={() => {
+                  setShowForm(false);
+                  setEditingCustomer(null);
+                }}
+                isLoading={isLoading}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -155,6 +185,7 @@ export default function CustomersPage() {
                 <CustomerCard
                   key={customer.id}
                   customer={customer}
+                  onEdit={handleEditCustomer}
                   onDelete={handleDeleteCustomer}
                 />
               ))}

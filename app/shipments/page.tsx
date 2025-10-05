@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout';
-import { ShipmentCard, ShipmentForm } from '@/components/shipments';
-import { Button, LoadingSpinner, ErrorMessage, Pagination, Select, SelectOption } from '@/components/ui';
+import { ShipmentCard } from '@/components/shipments';
+import { Button, PageLoader, LoadingSpinner, ErrorMessage, Pagination, Select, SelectOption } from '@/components/ui';
 import { useAuth, useShipments, useCustomers } from '@/hooks';
+
+// Lazy load heavy form component
+const ShipmentForm = lazy(() => import('@/components/shipments/ShipmentForm'));
 
 export default function ShipmentsPage() {
   const router = useRouter();
@@ -18,6 +21,7 @@ export default function ShipmentsPage() {
     currentPage,
     fetchShipments,
     createShipment,
+    updateShipment,
     deleteShipment,
     markDelivered 
   } = useShipments({ page: 1, limit: 9 });
@@ -25,6 +29,7 @@ export default function ShipmentsPage() {
   const { customers } = useCustomers();
 
   const [showForm, setShowForm] = useState(false);
+  const [editingShipment, setEditingShipment] = useState<any>(null);
   const [filters, setFilters] = useState({
     type: '',
     mode: '',
@@ -69,10 +74,24 @@ export default function ShipmentsPage() {
     fetchShipments(filterParams);
   };
 
-  const handleCreateShipment = async (data: any) => {
-    const success = await createShipment(data);
+  const handleSubmitShipment = async (data: any) => {
+    let success;
+    if (editingShipment) {
+      success = await updateShipment(editingShipment.id, data);
+    } else {
+      success = await createShipment(data);
+    }
     if (success) {
       setShowForm(false);
+      setEditingShipment(null);
+    }
+  };
+
+  const handleEditShipment = (id: string) => {
+    const shipment = shipments.find(s => s.id === id);
+    if (shipment) {
+      setEditingShipment(shipment);
+      setShowForm(true);
     }
   };
 
@@ -87,11 +106,7 @@ export default function ShipmentsPage() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="xl" text="Loading..." />
-      </div>
-    );
+    return <PageLoader text="Loading shipments..." />;
   }
 
   if (!isAuthenticated) {
@@ -100,16 +115,16 @@ export default function ShipmentsPage() {
 
   const typeOptions: SelectOption[] = [
     { value: '', label: 'All Types' },
-    { value: 'domestic', label: 'Domestic' },
-    { value: 'international', label: 'International' },
+    { value: 'LOCAL', label: 'Local' },
+    { value: 'NATIONAL', label: 'National' },
+    { value: 'INTERNATIONAL', label: 'International' },
   ];
 
   const modeOptions: SelectOption[] = [
     { value: '', label: 'All Modes' },
-    { value: 'air', label: 'Air' },
-    { value: 'sea', label: 'Sea' },
-    { value: 'road', label: 'Road' },
-    { value: 'rail', label: 'Rail' },
+    { value: 'AIR', label: 'Air' },
+    { value: 'WATER', label: 'Water/Sea' },
+    { value: 'LAND', label: 'Land (Road/Rail)' },
   ];
 
   const statusOptions: SelectOption[] = [
@@ -127,21 +142,36 @@ export default function ShipmentsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Shipments</h1>
             <p className="text-gray-600 mt-1">Manage all your shipments</p>
           </div>
-          <Button variant="primary" onClick={() => setShowForm(!showForm)}>
+          <Button variant="primary" onClick={() => {
+            if (showForm) {
+              setShowForm(false);
+              setEditingShipment(null);
+            } else {
+              setShowForm(true);
+            }
+          }}>
             {showForm ? 'Cancel' : '+ New Shipment'}
           </Button>
         </div>
 
-        {/* Create Form */}
+        {/* Create/Edit Form */}
         {showForm && (
           <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Create New Shipment</h2>
-            <ShipmentForm
-              customers={customers}
-              onSubmit={handleCreateShipment}
-              onCancel={() => setShowForm(false)}
-              isLoading={isLoading}
-            />
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              {editingShipment ? 'Edit Shipment' : 'Create New Shipment'}
+            </h2>
+            <Suspense fallback={<LoadingSpinner size="md" />}>
+              <ShipmentForm
+                customers={customers}
+                initialData={editingShipment}
+                onSubmit={handleSubmitShipment}
+                onCancel={() => {
+                  setShowForm(false);
+                  setEditingShipment(null);
+                }}
+                isLoading={isLoading}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -199,6 +229,7 @@ export default function ShipmentsPage() {
                 <ShipmentCard
                   key={shipment.id}
                   shipment={shipment}
+                  onEdit={handleEditShipment}
                   onDelete={handleDeleteShipment}
                   onMarkDelivered={handleMarkDelivered}
                 />

@@ -31,6 +31,7 @@ interface UseCustomersReturn {
   createCustomer: (data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
   updateCustomer: (id: string, data: Partial<Customer>) => Promise<boolean>;
   deleteCustomer: (id: string) => Promise<boolean>;
+  fetchCustomerStats: () => Promise<{ totalCustomers: number } | null>;
 }
 
 export const useCustomers = (initialFilters?: CustomerFilters): UseCustomersReturn => {
@@ -242,6 +243,25 @@ export const useCustomers = (initialFilters?: CustomerFilters): UseCustomersRetu
     }
   };
 
+  // Fetch customer statistics
+  const fetchCustomerStats = async (): Promise<{ totalCustomers: number } | null> => {
+    try {
+      const response = await fetch('/api/customers/stats', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (err) {
+      console.error('Fetch customer stats error:', err);
+      return null;
+    }
+  };
+
   // Fetch customers on mount
   useEffect(() => {
     fetchCustomers(initialFilters);
@@ -260,5 +280,6 @@ export const useCustomers = (initialFilters?: CustomerFilters): UseCustomersRetu
     createCustomer,
     updateCustomer,
     deleteCustomer,
+    fetchCustomerStats,
   };
 };
