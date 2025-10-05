@@ -9,17 +9,29 @@ import { z } from 'zod';
 export const shipmentTypeEnum = z.enum(['LOCAL', 'NATIONAL', 'INTERNATIONAL']);
 export const shipmentModeEnum = z.enum(['LAND', 'AIR', 'WATER']);
 
+// Helpers to coerce inputs into the enum values (accept lowercase or mixed case from clients)
+const preprocessToEnum = (val: unknown) => {
+  if (typeof val === 'string') return val.toUpperCase();
+  return val;
+};
+
 // Cost validation helper
+// Accept numbers or strings for cost and coerce numbers to fixed-string format
 const costString = z
   .string()
   .regex(/^\d+(\.\d{1,2})?$/, 'Must be a valid decimal number (e.g., 100.50)')
   .refine((val) => parseFloat(val) >= 0, 'Must be 0 or greater');
 
+const preprocessCost = z.preprocess((val) => {
+  if (typeof val === 'number') return val.toString();
+  return val;
+}, costString);
+
 // Base shipment schema
 const baseShipmentSchema = {
   customerId: z.string().uuid('Invalid customer ID'),
-  type: shipmentTypeEnum,
-  mode: shipmentModeEnum,
+  type: z.preprocess(preprocessToEnum, shipmentTypeEnum),
+  mode: z.preprocess(preprocessToEnum, shipmentModeEnum),
   startLocation: z
     .string()
     .min(2, 'Start location must be at least 2 characters')
@@ -30,14 +42,21 @@ const baseShipmentSchema = {
     .min(2, 'End location must be at least 2 characters')
     .max(500, 'End location too long')
     .trim(),
-  cost: costString,
-  calculatedTotal: costString,
-  deliveryDate: z
-    .string()
-    .datetime('Invalid date format (use ISO 8601)')
-    .optional()
-    .nullable()
-    .or(z.literal('')),
+  cost: preprocessCost,
+  calculatedTotal: preprocessCost,
+  deliveryDate: z.preprocess((val) => {
+    // Accept Date objects, numeric timestamps, and date-only strings (YYYY-MM-DD)
+    if (val instanceof Date) return val.toISOString();
+    if (typeof val === 'number') return new Date(val).toISOString();
+    if (typeof val === 'string') {
+      // If date-only like YYYY-MM-DD, convert to ISO at start of day UTC
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        return new Date(val).toISOString();
+      }
+      return val;
+    }
+    return val;
+  }, z.string().datetime('Invalid date format (use ISO 8601)').optional().nullable().or(z.literal(''))),
 };
 
 // Create shipment validation schema
@@ -45,12 +64,12 @@ export const createShipmentSchema = z.object(baseShipmentSchema);
 
 // Update shipment validation schema (all fields optional except customerId cannot be changed)
 export const updateShipmentSchema = z.object({
-  type: baseShipmentSchema.type.optional(),
-  mode: baseShipmentSchema.mode.optional(),
+  type: z.preprocess(preprocessToEnum, shipmentTypeEnum).optional(),
+  mode: z.preprocess(preprocessToEnum, shipmentModeEnum).optional(),
   startLocation: baseShipmentSchema.startLocation.optional(),
   endLocation: baseShipmentSchema.endLocation.optional(),
-  cost: costString.optional(),
-  calculatedTotal: costString.optional(),
+  cost: preprocessCost.optional(),
+  calculatedTotal: preprocessCost.optional(),
   deliveryDate: baseShipmentSchema.deliveryDate.optional(),
   isDelivered: z.boolean().optional(),
 });
@@ -69,17 +88,24 @@ export const listShipmentsSchema = z.object({
     .default('20')
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().positive().max(100)),
-  type: shipmentTypeEnum.optional(),
-  mode: shipmentModeEnum.optional(),
-  isDelivered: z
-    .string()
-    .optional()
-    .transform((val) => val === 'true')
-    .pipe(z.boolean())
-    .optional(),
+  type: z.preprocess(preprocessToEnum, shipmentTypeEnum).optional(),
+  mode: z.preprocess(preprocessToEnum, shipmentModeEnum).optional(),
+  isDelivered: z.preprocess((val) => {
+    if (typeof val === 'string') return val === 'true';
+    if (typeof val === 'boolean') return val;
+    return undefined;
+  }, z.boolean().optional()),
   customerId: z.string().uuid().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.preprocess((val) => {
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return new Date(val).toISOString();
+    if (typeof val === 'number') return new Date(val).toISOString();
+    return val;
+  }, z.string().datetime().optional()),
+  endDate: z.preprocess((val) => {
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return new Date(val).toISOString();
+    if (typeof val === 'number') return new Date(val).toISOString();
+    return val;
+  }, z.string().datetime().optional()),
   sortBy: z
     .enum(['createdAt', 'deliveryDate', 'cost', 'calculatedTotal', 'type'])
     .optional()
@@ -90,8 +116,8 @@ export const listShipmentsSchema = z.object({
 
 // Shipment filter schema (for programmatic filtering)
 export const shipmentFilterSchema = z.object({
-  type: shipmentTypeEnum.optional(),
-  mode: shipmentModeEnum.optional(),
+  type: z.preprocess(preprocessToEnum, shipmentTypeEnum).optional(),
+  mode: z.preprocess(preprocessToEnum, shipmentModeEnum).optional(),
   isDelivered: z.boolean().optional(),
   customerId: z.string().uuid().optional(),
   startDate: z.string().datetime().optional(),
@@ -109,11 +135,12 @@ export const shipmentFilterSchema = z.object({
 
 // Mark shipment as delivered schema
 export const markDeliveredSchema = z.object({
-  deliveryDate: z
-    .string()
-    .datetime('Invalid date format (use ISO 8601)')
-    .optional()
-    .default(new Date().toISOString()),
+  deliveryDate: z.preprocess((val) => {
+    if (val instanceof Date) return val.toISOString();
+    if (typeof val === 'number') return new Date(val).toISOString();
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return new Date(val).toISOString();
+    return val;
+  }, z.string().datetime('Invalid date format (use ISO 8601)').optional().default(new Date().toISOString())),
 });
 
 // Shipment ID param schema (for route params)
