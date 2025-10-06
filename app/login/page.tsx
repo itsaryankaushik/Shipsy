@@ -101,7 +101,7 @@ export default function LoginPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-800">
             Or{' '}
-            <div className="font-medium text-md"> Use Email: testuser3@shipsy.com and Password: password123 </div>
+            <div className="font-medium text-md"> Use Email: testuser1@shipsy.com and Password: password123 </div>
           </p>
           <p className="mt-2 text-center text-sm text-gray-700">
             Or{' '}
