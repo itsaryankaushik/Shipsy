@@ -4,7 +4,7 @@ import { verifyAccessToken, extractBearerToken } from './auth';
 export async function requireAuth(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-    let token = extractBearerToken(authHeader) || request.cookies.get('access_token')?.value || null;
+    const token = extractBearerToken(authHeader) || request.cookies.get('access_token')?.value || null;
 
     if (!token) {
       return { authenticated: false, response: NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 }) };
@@ -16,7 +16,7 @@ export async function requireAuth(request: NextRequest) {
     }
 
     return { authenticated: true, user: { userId: payload.userId, email: payload.email } };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('requireAuth error', err);
     return { authenticated: false, response: NextResponse.json({ success: false, message: 'Authentication failed' }, { status: 401 }) };
   }

@@ -143,7 +143,7 @@ export function isEmpty(value: unknown): boolean {
  * Validate required fields
  */
 export function validateRequiredFields(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   requiredFields: string[]
 ): string[] {
   const missingFields: string[] = [];

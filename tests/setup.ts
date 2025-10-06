@@ -24,13 +24,19 @@ jest.mock('next/navigation', () => ({
 process.env.DATABASE_URL = 'postgres://test:test@localhost:5432/test';
 process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing';
 process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret-key';
-process.env.NODE_ENV = 'test';
+
+// Set NODE_ENV using Object.defineProperty to avoid read-only error
+Object.defineProperty(process.env, 'NODE_ENV', {
+  value: 'test',
+  writable: true,
+  configurable: true,
+});
 
 // Mock crypto for UUID generation
 global.crypto = {
   ...global.crypto,
   randomUUID: () => 'test-uuid-' + Math.random().toString(36).substring(7),
-} as any;
+} as Crypto;
 
 // Mock fetch globally
 global.fetch = jest.fn();

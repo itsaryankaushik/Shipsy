@@ -9,7 +9,7 @@ type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
 class Logger {
-  private logWithTimestamp(level: LogLevel, message: string, ...args: any[]) {
+  private logWithTimestamp(level: LogLevel, message: string, ...args: unknown[]) {
     if (!IS_DEV && level === 'debug') return; // Skip debug logs in production
 
     const timestamp = new Date().toISOString();
@@ -31,15 +31,15 @@ class Logger {
     }
   }
 
-  info(message: string, ...args: any[]) {
+  info(message: string, ...args: unknown[]) {
     this.logWithTimestamp('info', message, ...args);
   }
 
-  warn(message: string, ...args: any[]) {
+  warn(message: string, ...args: unknown[]) {
     this.logWithTimestamp('warn', message, ...args);
   }
 
-  error(message: string, error?: Error | unknown, ...args: any[]) {
+  error(message: string, error?: Error | unknown, ...args: unknown[]) {
     if (error instanceof Error) {
       this.logWithTimestamp('error', message, {
         message: error.message,
@@ -51,7 +51,7 @@ class Logger {
     }
   }
 
-  debug(message: string, ...args: any[]) {
+  debug(message: string, ...args: unknown[]) {
     this.logWithTimestamp('debug', message, ...args);
   }
 

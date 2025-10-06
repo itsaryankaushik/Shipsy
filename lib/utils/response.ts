@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ApiResponse, ApiError, PaginationMeta, HttpStatus, ErrorCode } from '@/types/api.types';
+import { ApiResponse, ApiError, PaginationMeta } from '@/types/api.types';
 import { HTTP_STATUS, ERROR_CODES, API_MESSAGES } from './constants';
 import { ZodError } from 'zod';
 
@@ -76,7 +76,7 @@ export function errorResponse(
   message: string,
   code: string = ERROR_CODES.INTERNAL_ERROR,
   status: number = HTTP_STATUS.INTERNAL_SERVER_ERROR,
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 ): NextResponse<ApiResponse> {
   const error: ApiError = {
     code,
@@ -100,7 +100,7 @@ export function errorResponse(
 export function validationErrorResponse(
   errors: Record<string, string> | ZodError
 ): NextResponse<ApiResponse> {
-  let errorDetails: Record<string, any>;
+  let errorDetails: Record<string, string>;
 
   if (errors instanceof ZodError) {
     errorDetails = errors.errors.reduce((acc, err) => {
