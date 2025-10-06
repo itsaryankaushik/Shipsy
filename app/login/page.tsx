@@ -99,12 +99,17 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to Shipsy
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-800">
+            Or{' '}
+            <div className="font-medium text-md"> Use Email: testuser3@shipsy.com and Password: password123 </div>
+          </p>
           <p className="mt-2 text-center text-sm text-gray-700">
             Or{' '}
             <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
               create a new account
             </Link>
           </p>
+          
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
