@@ -196,7 +196,7 @@ export const createInvalidCustomerData = (field: 'name' | 'email' | 'phone' | 'a
 };
 
 export const createValidShipmentData = (overrides?: any) => ({
-  customerId: `customer-${crypto.randomUUID()}`,
+  customerId: crypto.randomUUID(), // Proper UUID format
   type: 'LOCAL' as const,
   mode: 'LAND' as const,
   startLocation: 'New York, NY',

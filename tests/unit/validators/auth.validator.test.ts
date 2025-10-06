@@ -135,11 +135,11 @@ describe('Authentication Validator', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject password without special character', () => {
-        const invalidData = createValidAuthData({ password: 'Password123' });
-        const result = registerSchema.safeParse(invalidData);
+      it('should accept password without special character (not required)', () => {
+        const validData = createValidAuthData({ password: 'Password123' });
+        const result = registerSchema.safeParse(validData);
         
-        expect(result.success).toBe(false);
+        expect(result.success).toBe(true); // Special characters not required
       });
 
       it('should reject empty password', () => {

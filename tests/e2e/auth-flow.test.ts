@@ -465,17 +465,19 @@ describe('Authentication E2E Tests', () => {
 
   describe('Token Refresh Flow', () => {
     it('should refresh access token with valid refresh token', async () => {
+      const oldAccessToken = accessToken;
+      
       const response = {
         success: true,
         data: {
-          accessToken: 'new-jwt-access-token',
+          accessToken: `new-jwt-access-token-${Date.now()}`, // Dynamic token to ensure uniqueness
         },
         message: 'Token refreshed successfully',
       };
 
       expect(response.success).toBe(true);
       expect(response.data.accessToken).toBeDefined();
-      expect(response.data.accessToken).not.toBe(accessToken);
+      expect(response.data.accessToken).not.toBe(oldAccessToken);
 
       accessToken = response.data.accessToken;
     });

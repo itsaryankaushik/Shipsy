@@ -25,11 +25,12 @@ const baseCustomerSchema = {
     .max(1000, 'Address too long'),
   email: z
     .string()
+    .trim()
     .email('Invalid email format')
     .max(255, 'Email too long')
+    .toLowerCase()
     .optional()
-    .or(z.literal(''))
-    .transform((val) => val ? val.toLowerCase().trim() : val),
+    .or(z.literal('')),
 };
 
 // Create customer validation schema
