@@ -13,10 +13,10 @@ export const registerSchema = z.object({
   email: z
     .string()
     .min(1, 'Email is required')
+    .trim()
     .email('Invalid email format')
     .max(255, 'Email too long')
-    .toLowerCase()
-    .trim(),
+    .toLowerCase(),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -27,15 +27,15 @@ export const registerSchema = z.object({
     ),
   name: z
     .string()
+    .trim()
     .min(2, 'Name must be at least 2 characters')
-    .max(255, 'Name too long')
-    .trim(),
+    .max(255, 'Name too long'),
   phone: z
     .string()
+    .trim()
     .regex(/^\+?[1-9]\d{9,14}$/, 'Invalid phone number format (e.g., +1234567890)')
     .min(10, 'Phone number must be at least 10 digits')
-    .max(20, 'Phone number too long')
-    .trim(),
+    .max(20, 'Phone number too long'),
 });
 
 // Login validation schema
@@ -43,9 +43,9 @@ export const loginSchema = z.object({
   email: z
     .string()
     .min(1, 'Email is required')
+    .trim()
     .email('Invalid email format')
-    .toLowerCase()
-    .trim(),
+    .toLowerCase(),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -72,16 +72,16 @@ export const changePasswordSchema = z
 export const updateProfileSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name too long')
-    .trim()
     .optional(),
   phone: z
     .string()
+    .trim()
     .regex(/^\+?[1-9]\d{9,14}$/, 'Invalid phone number format')
     .min(10)
     .max(20)
-    .trim()
     .optional(),
 });
 

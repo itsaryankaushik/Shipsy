@@ -34,29 +34,32 @@ const baseShipmentSchema = {
   mode: z.preprocess(preprocessToEnum, shipmentModeEnum),
   startLocation: z
     .string()
+    .trim()
     .min(2, 'Start location must be at least 2 characters')
-    .max(500, 'Start location too long')
-    .trim(),
+    .max(500, 'Start location too long'),
   endLocation: z
     .string()
+    .trim()
     .min(2, 'End location must be at least 2 characters')
-    .max(500, 'End location too long')
-    .trim(),
+    .max(500, 'End location too long'),
   cost: preprocessCost,
   calculatedTotal: preprocessCost,
   deliveryDate: z.preprocess((val) => {
+    // Allow null, undefined, or empty string
+    if (val === null || val === undefined || val === '') return null;
     // Accept Date objects, numeric timestamps, and date-only strings (YYYY-MM-DD)
     if (val instanceof Date) return val.toISOString();
     if (typeof val === 'number') return new Date(val).toISOString();
     if (typeof val === 'string') {
       // If date-only like YYYY-MM-DD, convert to ISO at start of day UTC
       if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
-        return new Date(val).toISOString();
+        return new Date(val + 'T00:00:00.000Z').toISOString();
       }
+      // If already ISO string, return as is
       return val;
     }
     return val;
-  }, z.string().datetime('Invalid date format (use ISO 8601)').optional().nullable().or(z.literal(''))),
+  }, z.string().datetime('Invalid date format (use ISO 8601)').nullable().optional()),
 };
 
 // Create shipment validation schema

@@ -32,6 +32,33 @@ Object.defineProperty(process.env, 'NODE_ENV', {
   configurable: true,
 });
 
+// Mock Web APIs for Next.js (Request, Response, Headers)
+if (typeof global.Request === 'undefined') {
+  // @ts-ignore
+  global.Request = class Request {
+    constructor(public url: string, public init?: any) {}
+  };
+}
+
+if (typeof global.Response === 'undefined') {
+  // @ts-ignore
+  global.Response = class Response {
+    constructor(public body?: any, public init?: any) {}
+  };
+}
+
+if (typeof global.Headers === 'undefined') {
+  // @ts-ignore
+  global.Headers = class Headers extends Map {
+    append(name: string, value: string) {
+      this.set(name.toLowerCase(), value);
+    }
+    get(name: string) {
+      return super.get(name.toLowerCase());
+    }
+  };
+}
+
 // Mock crypto for UUID generation
 global.crypto = {
   ...global.crypto,
