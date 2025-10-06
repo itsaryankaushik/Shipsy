@@ -9,7 +9,7 @@ This document provides a visual overview of the Shipsy project's commit history,
 ## Recent Commits (Visual)
 
 ### Part 1: Latest Commits - Tests & Deployment
-![Git Log Part 1](./git-log-1.png)
+![Git Log Part 1](./logs1.png)
 
 **Key Commits:**
 - `3d35637` - Add Tests Unit, Integration, E2E
@@ -27,7 +27,7 @@ This document provides a visual overview of the Shipsy project's commit history,
 ---
 
 ### Part 2: Feature Development - Components & Pages
-![Git Log Part 2](./git-log-2.png)
+![Git Log Part 2](./logs2.png)
 
 **Key Commits:**
 - `54fa96b` - Frontend validators added
