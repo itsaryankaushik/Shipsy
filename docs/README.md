@@ -33,11 +33,17 @@ Welcome to the Shipsy project documentation. This directory contains comprehensi
 | **[TEST_SUITE_COMPLETE.md](./TEST_SUITE_COMPLETE.md)** | Comprehensive test suite documentation with 156+ test cases | QA Engineers, Testers |
 | **[EDIT_FUNCTIONALITY_FIX.md](./EDIT_FUNCTIONALITY_FIX.md)** | Edit form bug fixes and implementation details | Frontend Developers |
 
+### � Technical Documentation
+
+| Document | Description | Best For |
+|----------|-------------|----------|
+| **[TechnicalDocumentation.md](./TechnicalDocumentation.md)** | Complete technical specs, architecture, modules, problem statement, and implementation guide | Developers, Architects, New Team Members |
+
 ### 🔌 API Documentation
 
 | Document | Description | Best For |
 |----------|-------------|----------|
-| **[api.md](./api.md)** | Complete API reference with all endpoints | API Developers |
+| **[API.md](./API.md)** | Complete REST API reference with all 20+ endpoints, request/response examples, error codes | API Developers, Integration Engineers |
 | **[POSTMAN.md](../POSTMAN.md)** | Postman collection guide with 24 API endpoints | API Testing, Integration |
 
 ---

@@ -36,6 +36,44 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: [
+      { url: "/icon.png", sizes: "any", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      {
+        rel: "mask-icon",
+        url: "/icon.png",
+      },
+    ],
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://shipsy.vercel.app",
+    siteName: "Shipsy",
+    title: "Shipsy - Modern Shipment Management",
+    description: "A comprehensive shipment management system built with Next.js 15, TypeScript, and PostgreSQL. Track shipments, manage customers, and analyze delivery statistics.",
+    images: [
+      {
+        url: "/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Shipsy Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Shipsy - Modern Shipment Management",
+    description: "A comprehensive shipment management system for tracking shipments and managing deliveries.",
+    images: ["/icon-512.png"],
+  },
 };
 
 export default function RootLayout({
