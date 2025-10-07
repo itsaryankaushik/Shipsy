@@ -4,6 +4,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { listShipmentsSchema, createShipmentSchema, updateShipmentSchema, markDeliveredSchema } from '@/lib/validators';
 import { ZodError } from 'zod';
 
+/**
+ * Helper to normalize date to ISO string format
+ */
+// const  = (date: any): string | null | undefined => {
+//   if (!date) return undefined;
+//   if (date instanceof Date) return date;
+//   if (typeof date === 'string') {
+//     // If it's a date-only string (YYYY-MM-DD), keep it as is - validator will handle it
+//     if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+//     // Try to parse and convert to ISO
+//     try {
+//       return new Date(date);
+//     } catch {
+//       return date; // Let validator handle invalid dates
+//     }
+//   }
+//   return undefined;
+// };
+
 interface Shipment {
   id: string;
   trackingNumber: string;
@@ -151,7 +170,7 @@ export const useShipments = (initialFilters?: ShipmentFilters): UseShipmentsRetu
         mode: ((shipmentData as any).mode || '').toString().toUpperCase(),
         cost: typeof (shipmentData as any).cost === 'number' ? (shipmentData as any).cost.toFixed(2) : (shipmentData as any).cost,
         calculatedTotal: typeof (shipmentData as any).calculatedTotal === 'number' ? (shipmentData as any).calculatedTotal.toFixed(2) : (shipmentData as any).calculatedTotal ?? (typeof (shipmentData as any).cost === 'number' ? (shipmentData as any).cost.toFixed(2) : (shipmentData as any).cost),
-        deliveryDate: (shipmentData as any).estimatedDeliveryDate || (shipmentData as any).deliveryDate || undefined,
+        deliveryDate: ((shipmentData as any).estimatedDeliveryDate || (shipmentData as any).deliveryDate),
       };
       delete normalizedForValidation.origin;
       delete normalizedForValidation.destination;
@@ -179,7 +198,7 @@ export const useShipments = (initialFilters?: ShipmentFilters): UseShipmentsRetu
         // server validates cost as string decimal
         cost: typeof (shipmentData as any).cost === 'number' ? (shipmentData as any).cost.toFixed(2) : (shipmentData as any).cost,
         calculatedTotal: typeof (shipmentData as any).calculatedTotal === 'number' ? (shipmentData as any).calculatedTotal.toFixed(2) : (shipmentData as any).calculatedTotal,
-        deliveryDate: (shipmentData as any).estimatedDeliveryDate || (shipmentData as any).deliveryDate || undefined,
+        deliveryDate: ((shipmentData as any).estimatedDeliveryDate || (shipmentData as any).deliveryDate),
       };
       delete payload.origin;
       delete payload.destination;
@@ -220,7 +239,7 @@ export const useShipments = (initialFilters?: ShipmentFilters): UseShipmentsRetu
         mode: updates?.mode ? (updates.mode as any).toString().toUpperCase() : undefined,
         cost: typeof (updates as any).cost === 'number' ? (updates as any).cost.toFixed(2) : (updates as any).cost,
         calculatedTotal: typeof (updates as any).calculatedTotal === 'number' ? (updates as any).calculatedTotal.toFixed(2) : (updates as any).calculatedTotal ?? (typeof (updates as any).cost === 'number' ? (updates as any).cost.toFixed(2) : (updates as any).cost),
-        deliveryDate: (updates as any).estimatedDeliveryDate || (updates as any).deliveryDate || undefined,
+        deliveryDate: ((updates as any).estimatedDeliveryDate || (updates as any).deliveryDate),
       };
       delete normalizedForValidation.origin;
       delete normalizedForValidation.destination;
@@ -245,7 +264,7 @@ export const useShipments = (initialFilters?: ShipmentFilters): UseShipmentsRetu
         mode: updates?.mode ? (updates.mode as any).toString().toUpperCase() : undefined,
         cost: typeof (updates as any).cost === 'number' ? (updates as any).cost.toFixed(2) : (updates as any).cost,
         calculatedTotal: typeof (updates as any).calculatedTotal === 'number' ? (updates as any).calculatedTotal.toFixed(2) : (updates as any).calculatedTotal,
-        deliveryDate: (updates as any).estimatedDeliveryDate || (updates as any).deliveryDate || undefined,
+        deliveryDate: ((updates as any).estimatedDeliveryDate || (updates as any).deliveryDate),
       };
       delete payload.origin;
       delete payload.destination;

@@ -31,7 +31,7 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       calculatedTotal: string;
       deliveryDate?: Date | null;
     }
-  ): Promise<Shipment> {
+  ): Promise<any> {
     try {
       // Validate data
       const validation = Shipment.validateForCreation(data);
@@ -49,7 +49,14 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       const shipmentData = Shipment.prepareForCreation(userId, data);
       const created = await this.repository.create(shipmentData);
 
-      return Shipment.fromDatabase(created);
+      const shipment = Shipment.fromDatabase(created);
+      // Serialize dates for API response
+      return {
+        ...shipment,
+        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate) : null,
+        createdAt: new Date(shipment.createdAt),
+        updatedAt: new Date(shipment.updatedAt),
+      } as any;
     } catch (error) {
       throw this.handleError(error, 'createShipment');
     }
@@ -58,7 +65,7 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
   /**
    * Get shipment by ID
    */
-  async getShipmentById(id: string, userId: string): Promise<Shipment | null> {
+  async getShipmentById(id: string, userId: string): Promise<any> {
     try {
       const shipmentRecord = await this.repository.findById(id);
       if (!shipmentRecord) {
@@ -66,13 +73,19 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       }
 
       const shipment = Shipment.fromDatabase(shipmentRecord);
-
+      
       // Verify ownership
       if (!shipment.belongsTo(userId)) {
         throw new Error('Unauthorized access to shipment');
       }
 
-      return shipment;
+      // Return serialized data with ISO string dates
+      return {
+        ...shipment,
+        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate) : null,
+        createdAt: new Date(shipment.createdAt),
+        updatedAt: new Date(shipment.updatedAt),
+      };
     } catch (error) {
       throw this.handleError(error, 'getShipmentById');
     }
@@ -94,7 +107,20 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
         throw new Error('Unauthorized access to shipment');
       }
 
-      return shipmentWithCustomer;
+      // Serialize dates for frontend
+      return {
+        ...shipmentWithCustomer,
+        deliveryDate: shipmentWithCustomer.deliveryDate 
+          ? new Date(shipmentWithCustomer.deliveryDate) 
+          : null,
+        createdAt: new Date(shipmentWithCustomer.createdAt),
+        updatedAt: new Date(shipmentWithCustomer.updatedAt),
+        customer: shipmentWithCustomer.customer ? {
+          ...shipmentWithCustomer.customer,
+          createdAt: new Date(shipmentWithCustomer.customer.createdAt),
+          updatedAt: new Date(shipmentWithCustomer.customer.updatedAt),
+        } : undefined,
+      };
     } catch (error) {
       throw this.handleError(error, 'getShipmentWithCustomer');
     }
@@ -118,7 +144,7 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
     } = {}
-  ): Promise<{ shipments: Shipment[]; meta: PaginationMeta }> {
+  ): Promise<{ shipments: any[]; meta: PaginationMeta }> {
     try {
       const {
         page = 1,
@@ -149,7 +175,16 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
         sortOrder,
       });
 
-      const shipments = items.map((item) => Shipment.fromDatabase(item));
+      // Serialize dates for frontend
+      const shipments = items.map((item) => {
+        const shipment = Shipment.fromDatabase(item);
+        return {
+          ...shipment,
+          deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate) : null,
+          createdAt: new Date(shipment.createdAt),
+          updatedAt: new Date(shipment.updatedAt),
+        };
+      });
       const meta = createPaginationMeta(page, limit, total);
 
       return { shipments, meta };
@@ -216,7 +251,7 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       deliveryDate?: Date | null;
       isDelivered?: boolean;
     }
-  ): Promise<Shipment> {
+  ): Promise<any> {
     try {
       // Check if shipment exists and belongs to user
       const existing = await this.repository.findById(id);
@@ -224,8 +259,8 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
         throw new Error('Shipment not found');
       }
 
-      const shipment = Shipment.fromDatabase(existing);
-      if (!shipment.belongsTo(userId)) {
+      const existingShipment = Shipment.fromDatabase(existing);
+      if (!existingShipment.belongsTo(userId)) {
         throw new Error('Unauthorized access to shipment');
       }
 
@@ -237,7 +272,14 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
         throw new Error('Failed to update shipment');
       }
 
-      return Shipment.fromDatabase(updated);
+      const shipment = Shipment.fromDatabase(updated);
+      // Serialize dates for API response
+      return {
+        ...shipment,
+        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate) : null,
+        createdAt: new Date(shipment.createdAt),
+        updatedAt: new Date(shipment.updatedAt),
+      } as any;
     } catch (error) {
       throw this.handleError(error, 'updateShipment');
     }

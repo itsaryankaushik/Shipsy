@@ -33,9 +33,9 @@ export const registerSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^\+?[1-9]\d{9,14}$/, 'Invalid phone number format (e.g., +1234567890)')
-    .min(10, 'Phone number must be at least 10 digits')
-    .max(20, 'Phone number too long'),
+    .min(10, 'Phone number must be at least 10 characters')
+    .max(20, 'Phone number too long')
+    .regex(/^\+?[1-9]\d{9,12}$/, 'Invalid phone number format (must be 10-13 digits, optional + prefix)'),
 });
 
 // Login validation schema
@@ -79,9 +79,9 @@ export const updateProfileSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^\+?[1-9]\d{9,14}$/, 'Invalid phone number format')
-    .min(10)
-    .max(20)
+    .min(10, 'Phone number must be at least 10 characters')
+    .max(20, 'Phone number too long')
+    .regex(/^\+?[1-9]\d{9,14}$/, 'Invalid phone number format (must be 10-15 digits, optional + prefix)')
     .optional(),
 });
 

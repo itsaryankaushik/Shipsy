@@ -52,7 +52,7 @@ export async function PUT(
     const data = parsed.data;
     const updateData: any = { ...data };
     if (data.deliveryDate) updateData.deliveryDate = new Date(data.deliveryDate);
-
+    
     const result = await shipmentService.updateShipment(id, auth.user!.userId, updateData);
     return successResponse(result, 'Shipment updated successfully');
   } catch (error) {

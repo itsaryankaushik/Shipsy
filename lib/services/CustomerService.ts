@@ -1,9 +1,11 @@
 import { BaseService } from './BaseService';
 import { CustomerRepository, customerRepository } from '@/lib/repositories/CustomerRepository';
-import { Customer as CustomerSchema } from '@/lib/db/schema';
+import { Customer as CustomerSchema, shipments } from '@/lib/db/schema';
 import { Customer } from '@/models/Customer';
 import { PaginationMeta } from '@/types/api.types';
 import { createPaginationMeta } from '@/lib/utils/response';
+import { db } from '@/lib/db';
+import { eq } from 'drizzle-orm';
 
 /**
  * CustomerService
@@ -201,6 +203,17 @@ export class CustomerService extends BaseService<CustomerSchema, CustomerReposit
         throw new Error('Unauthorized access to customer');
       }
 
+      // Check if customer has any shipments (foreign key constraint)
+      const customerShipments = await db
+        .select()
+        .from(shipments)
+        .where(eq(shipments.customerId, id))
+        .limit(1);
+      
+      if (customerShipments.length > 0) {
+        throw new Error('Cannot delete customer: has associated shipments. Delete shipments first.');
+      }
+
       // Delete customer
       return await this.repository.delete(id);
     } catch (error) {
@@ -235,11 +248,22 @@ export class CustomerService extends BaseService<CustomerSchema, CustomerReposit
    */
   async bulkDeleteCustomers(ids: string[], userId: string): Promise<number> {
     try {
-      // Verify all customers belong to user
+      // Verify all customers belong to user and check for shipments
       for (const id of ids) {
         const belongs = await this.repository.belongsToUser(id, userId);
         if (!belongs) {
           throw new Error(`Unauthorized access to customer ${id}`);
+        }
+        
+        // Check if customer has any shipments (foreign key constraint)
+        const customerShipments = await db
+          .select()
+          .from(shipments)
+          .where(eq(shipments.customerId, id))
+          .limit(1);
+        
+        if (customerShipments.length > 0) {
+          throw new Error(`Cannot delete customer ${id}: has associated shipments. Delete shipments first.`);
         }
       }
 
