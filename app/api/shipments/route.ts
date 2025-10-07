@@ -66,7 +66,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       endLocation: data.endLocation,
       cost: data.cost,
       calculatedTotal: data.calculatedTotal,
-      deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
+      estimatedDeliveryDate: data.estimatedDeliveryDate ? new Date(data.estimatedDeliveryDate) : null,
     });
 
     return NextResponse.json(successResponse(result, 'Shipment created successfully'), { status: 201 });

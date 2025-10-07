@@ -268,7 +268,7 @@ export class Shipment {
       endLocation: string;
       cost: string;
       calculatedTotal: string;
-      deliveryDate?: Date | null;
+      estimatedDeliveryDate?: Date | null;
     }
   ) {
     return {
@@ -280,7 +280,7 @@ export class Shipment {
       endLocation: data.endLocation.trim(),
       cost: parseFloat(data.cost).toFixed(2),
       calculatedTotal: parseFloat(data.calculatedTotal).toFixed(2),
-      deliveryDate: data.deliveryDate || null,
+      estimatedDeliveryDate: data.estimatedDeliveryDate || null,
     };
   }
 

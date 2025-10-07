@@ -90,6 +90,7 @@ export const shipments = pgTable(
     
     // Status and timeline
     isDelivered: boolean('is_delivered').notNull().default(false),
+    estimatedDeliveryDate: timestamp('estimated_delivery_date', { withTimezone: true }),
     deliveryDate: timestamp('delivery_date', { withTimezone: true }),
     
     // Metadata

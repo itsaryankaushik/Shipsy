@@ -44,9 +44,9 @@ const baseShipmentSchema = {
     .max(500, 'End location too long'),
   cost: preprocessCost,
   calculatedTotal: preprocessCost,
-  deliveryDate: z.preprocess((val) => {
-    // Allow null, undefined, or empty string
-    if (val === null || val === undefined || val === '') return null;
+  estimatedDeliveryDate: z.preprocess((val) => {
+    // Allow null, undefined, or empty string (will fail validation if required)
+    if (val === null || val === undefined || val === '') return undefined;
     // Accept Date objects, numeric timestamps, and date-only strings (YYYY-MM-DD)
     if (val instanceof Date) return val.toISOString();
     if (typeof val === 'number') return new Date(val).toISOString();
@@ -59,7 +59,7 @@ const baseShipmentSchema = {
       return val;
     }
     return val;
-  }, z.string().datetime('Invalid date format (use ISO 8601)').nullable().optional()),
+  }, z.string().datetime('Invalid date format (use ISO 8601)')),
 };
 
 // Create shipment validation schema
@@ -73,7 +73,7 @@ export const updateShipmentSchema = z.object({
   endLocation: baseShipmentSchema.endLocation.optional(),
   cost: preprocessCost.optional(),
   calculatedTotal: preprocessCost.optional(),
-  deliveryDate: baseShipmentSchema.deliveryDate.optional(),
+  estimatedDeliveryDate: baseShipmentSchema.estimatedDeliveryDate.optional(),
   isDelivered: z.boolean().optional(),
 });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "shipments" ADD COLUMN "estimated_delivery_date" timestamp with time zone;

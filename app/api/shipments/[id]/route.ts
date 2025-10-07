@@ -51,7 +51,7 @@ export async function PUT(
 
     const data = parsed.data;
     const updateData: any = { ...data };
-    if (data.deliveryDate) updateData.deliveryDate = new Date(data.deliveryDate);
+    if (data.estimatedDeliveryDate) updateData.estimatedDeliveryDate = new Date(data.estimatedDeliveryDate);
     
     const result = await shipmentService.updateShipment(id, auth.user!.userId, updateData);
     return successResponse(result, 'Shipment updated successfully');

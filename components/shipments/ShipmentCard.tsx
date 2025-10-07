@@ -11,7 +11,7 @@ interface Shipment {
   type: 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL';
   mode: 'AIR' | 'WATER' | 'LAND';
   isDelivered: boolean;
-  estimatedDeliveryDate: string;
+  estimatedDeliveryDate: string | null;
   deliveryDate?: string | null;
 }
 
@@ -45,12 +45,19 @@ const ShipmentCard: React.FC<ShipmentCardProps> = ({
     return icons[mode as keyof typeof icons] || '📦';
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Not specified';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return 'Invalid date';
+    }
   };
 
   return (

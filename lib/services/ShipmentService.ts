@@ -29,7 +29,7 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       endLocation: string;
       cost: string;
       calculatedTotal: string;
-      deliveryDate?: Date | null;
+      estimatedDeliveryDate?: Date | null;
     }
   ): Promise<any> {
     try {
@@ -53,10 +53,11 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       // Serialize dates for API response
       return {
         ...shipment,
-        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate) : null,
-        createdAt: new Date(shipment.createdAt),
-        updatedAt: new Date(shipment.updatedAt),
-      } as any;
+        estimatedDeliveryDate: (shipment as any).estimatedDeliveryDate ? new Date((shipment as any).estimatedDeliveryDate).toISOString() : null,
+        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate).toISOString() : null,
+        createdAt: new Date(shipment.createdAt).toISOString(),
+        updatedAt: new Date(shipment.updatedAt).toISOString(),
+      };
     } catch (error) {
       throw this.handleError(error, 'createShipment');
     }
@@ -82,9 +83,10 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       // Return serialized data with ISO string dates
       return {
         ...shipment,
-        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate) : null,
-        createdAt: new Date(shipment.createdAt),
-        updatedAt: new Date(shipment.updatedAt),
+        estimatedDeliveryDate: (shipment as any).estimatedDeliveryDate ? new Date((shipment as any).estimatedDeliveryDate).toISOString() : null,
+        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate).toISOString() : null,
+        createdAt: new Date(shipment.createdAt).toISOString(),
+        updatedAt: new Date(shipment.updatedAt).toISOString(),
       };
     } catch (error) {
       throw this.handleError(error, 'getShipmentById');
@@ -110,15 +112,18 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       // Serialize dates for frontend
       return {
         ...shipmentWithCustomer,
-        deliveryDate: shipmentWithCustomer.deliveryDate 
-          ? new Date(shipmentWithCustomer.deliveryDate) 
+        estimatedDeliveryDate: shipmentWithCustomer.estimatedDeliveryDate 
+          ? new Date(shipmentWithCustomer.estimatedDeliveryDate).toISOString() 
           : null,
-        createdAt: new Date(shipmentWithCustomer.createdAt),
-        updatedAt: new Date(shipmentWithCustomer.updatedAt),
+        deliveryDate: shipmentWithCustomer.deliveryDate 
+          ? new Date(shipmentWithCustomer.deliveryDate).toISOString() 
+          : null,
+        createdAt: new Date(shipmentWithCustomer.createdAt).toISOString(),
+        updatedAt: new Date(shipmentWithCustomer.updatedAt).toISOString(),
         customer: shipmentWithCustomer.customer ? {
           ...shipmentWithCustomer.customer,
-          createdAt: new Date(shipmentWithCustomer.customer.createdAt),
-          updatedAt: new Date(shipmentWithCustomer.customer.updatedAt),
+          createdAt: new Date(shipmentWithCustomer.customer.createdAt).toISOString(),
+          updatedAt: new Date(shipmentWithCustomer.customer.updatedAt).toISOString(),
         } : undefined,
       };
     } catch (error) {
@@ -180,9 +185,10 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
         const shipment = Shipment.fromDatabase(item);
         return {
           ...shipment,
-          deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate) : null,
-          createdAt: new Date(shipment.createdAt),
-          updatedAt: new Date(shipment.updatedAt),
+          estimatedDeliveryDate: (shipment as any).estimatedDeliveryDate ? new Date((shipment as any).estimatedDeliveryDate).toISOString() : null,
+          deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate).toISOString() : null,
+          createdAt: new Date(shipment.createdAt).toISOString(),
+          updatedAt: new Date(shipment.updatedAt).toISOString(),
         };
       });
       const meta = createPaginationMeta(page, limit, total);
@@ -248,7 +254,7 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       endLocation?: string;
       cost?: string;
       calculatedTotal?: string;
-      deliveryDate?: Date | null;
+      estimatedDeliveryDate?: Date | null;
       isDelivered?: boolean;
     }
   ): Promise<any> {
@@ -276,9 +282,10 @@ export class ShipmentService extends BaseService<ShipmentSchema, ShipmentReposit
       // Serialize dates for API response
       return {
         ...shipment,
-        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate) : null,
-        createdAt: new Date(shipment.createdAt),
-        updatedAt: new Date(shipment.updatedAt),
+        estimatedDeliveryDate: (shipment as any).estimatedDeliveryDate ? new Date((shipment as any).estimatedDeliveryDate).toISOString() : null,
+        deliveryDate: shipment.deliveryDate ? new Date(shipment.deliveryDate).toISOString() : null,
+        createdAt: new Date(shipment.createdAt).toISOString(),
+        updatedAt: new Date(shipment.updatedAt).toISOString(),
       } as any;
     } catch (error) {
       throw this.handleError(error, 'updateShipment');

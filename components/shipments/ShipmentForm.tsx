@@ -13,7 +13,7 @@ interface ShipmentFormData {
   cost: number;
   taxPercent: number;
   calculatedTotal: number; // total after taxes
-  deliveryDate: string; // YYYY-MM-DD format for date input
+  estimatedDeliveryDate: string; // YYYY-MM-DD format for date input
 }
 
 export interface ShipmentFormProps {
@@ -49,20 +49,34 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
     return parseFloat((((total - cost) / cost) * 100).toFixed(2));
   };
 
-  const getInitialFormData = (): ShipmentFormData => ({
-    customerId: initialData?.customerId || '',
-    startLocation: (initialData as any)?.startLocation || '',
-    endLocation: (initialData as any)?.endLocation || '',
-    // normalize any incoming initialData values to server enum labels (UPPERCASE)
-    type: (initialData?.type ? (initialData.type as any).toString().toUpperCase() : 'LOCAL') as 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL',
-    mode: (initialData?.mode ? (initialData.mode as any).toString().toUpperCase() : 'LAND') as 'LAND' | 'AIR' | 'WATER',
-    cost: initialData?.cost ? parseFloat(initialData.cost.toString()) : 0,
-    taxPercent: initialData?.cost && initialData?.calculatedTotal 
-      ? calculateTaxPercent(parseFloat(initialData.cost.toString()), parseFloat(initialData.calculatedTotal.toString()))
-      : 0,
-    calculatedTotal: initialData?.calculatedTotal ? parseFloat(initialData.calculatedTotal.toString()) : 0,
-    deliveryDate: formatDateForInput((initialData as any)?.deliveryDate),
-  });
+  const getInitialFormData = (): ShipmentFormData => {
+    // Default to 7 days from now for new shipments
+    const getDefaultDate = () => {
+      const date = new Date();
+      date.setDate(date.getDate() + 7);
+      return date.toISOString().split('T')[0];
+    };
+
+    // For edit mode, use existing estimatedDeliveryDate, otherwise use default
+    const estimatedDate = (initialData as any)?.estimatedDeliveryDate 
+      ? formatDateForInput((initialData as any).estimatedDeliveryDate)
+      : getDefaultDate();
+
+    return {
+      customerId: initialData?.customerId || '',
+      startLocation: (initialData as any)?.startLocation || '',
+      endLocation: (initialData as any)?.endLocation || '',
+      // normalize any incoming initialData values to server enum labels (UPPERCASE)
+      type: (initialData?.type ? (initialData.type as any).toString().toUpperCase() : 'LOCAL') as 'LOCAL' | 'NATIONAL' | 'INTERNATIONAL',
+      mode: (initialData?.mode ? (initialData.mode as any).toString().toUpperCase() : 'LAND') as 'LAND' | 'AIR' | 'WATER',
+      cost: initialData?.cost ? parseFloat(initialData.cost.toString()) : 0,
+      taxPercent: initialData?.cost && initialData?.calculatedTotal 
+        ? calculateTaxPercent(parseFloat(initialData.cost.toString()), parseFloat(initialData.calculatedTotal.toString()))
+        : 0,
+      calculatedTotal: initialData?.calculatedTotal ? parseFloat(initialData.calculatedTotal.toString()) : 0,
+      estimatedDeliveryDate: estimatedDate,
+    };
+  };
 
   const [formData, setFormData] = useState<ShipmentFormData>(getInitialFormData());
   const [errors, setErrors] = useState<Partial<Record<keyof ShipmentFormData, string>>>({});
@@ -114,7 +128,7 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
     if (!formData.startLocation.trim()) newErrors.startLocation = 'Start location is required';
     if (!formData.endLocation.trim()) newErrors.endLocation = 'End location is required';
     if (formData.cost <= 0) newErrors.cost = 'Cost must be greater than 0';
-    if (!formData.deliveryDate) newErrors.deliveryDate = 'Delivery date is required';
+    if (!formData.estimatedDeliveryDate) newErrors.estimatedDeliveryDate = 'Estimated delivery date is required';
     // calculatedTotal must be present and >= cost
     if (formData.calculatedTotal <= 0) newErrors.calculatedTotal = 'Calculated total is required';
 
@@ -136,7 +150,7 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
       mode: formData.mode,
       cost: formData.cost.toString(),
       calculatedTotal: formData.calculatedTotal.toString(),
-      deliveryDate: formData.deliveryDate, // Send as YYYY-MM-DD, API will handle conversion
+      estimatedDeliveryDate: formData.estimatedDeliveryDate, // Send as YYYY-MM-DD, API will handle conversion
     };
 
     await onSubmit(payload);
@@ -196,11 +210,11 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({
         />
 
         <Input
-          label="Delivery Date"
+          label="Estimated Delivery Date"
           type="date"
-          value={formData.deliveryDate}
-          onChange={(e) => handleChange('deliveryDate', e.target.value)}
-          error={errors.deliveryDate}
+          value={formData.estimatedDeliveryDate}
+          onChange={(e) => handleChange('estimatedDeliveryDate', e.target.value)}
+          error={errors.estimatedDeliveryDate}
           fullWidth
           required
         />
