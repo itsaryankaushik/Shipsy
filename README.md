@@ -1160,6 +1160,7 @@ nano .env  # or use your preferred editor
 ### 🔜 Phase 10: Optional Features
 
 #### Real-time Features
+- [ ] AI-powered Natural Language Query Resolution
 - [ ] WebSocket integration for live tracking
 - [ ] Real-time notifications
 - [ ] Live dashboard updates
@@ -1283,7 +1284,7 @@ We welcome contributions! Here's how to get started:
 
 2. **Clone your fork**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/shipsy.git
+   git clone https://github.com/itsaryankaushik/shipsy.git
    cd shipsy
    ```
 
@@ -1382,42 +1383,10 @@ it('should create a new customer with valid data', async () => {
 
 ---
 
-## 📄 License
-
-This project is licensed under the **MIT License**.
-
-```
-MIT License
-
-Copyright (c) 2025 Shipsy
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-See [LICENSE](./LICENSE) file for full text.
-
----
-
 ## 👥 Authors & Contributors
 
 ### Core Team
-- **Pratibha Kaushik** - Initial development, architecture, implementation
+- **Aryan Kaushik** - Initial development, architecture, implementation
 
 ### Contributors
 - Your name could be here! See [Contributing](#-contributing) section.
@@ -1459,9 +1428,9 @@ Special thanks to the open-source community and these amazing projects:
 
 ### Getting Help
 1. Check the [documentation](./docs/)
-2. Review [existing issues](https://github.com/YOUR_USERNAME/shipsy/issues)
+2. Review [existing issues](https://github.com/itsaryankaushik/shipsy/issues)
 3. Search [Stack Overflow](https://stackoverflow.com/questions/tagged/shipsy)
-4. Open a [new issue](https://github.com/YOUR_USERNAME/shipsy/issues/new)
+4. Open a [new issue](https://github.com/itsaryankaushik/shipsy/issues/new)
 
 ### Reporting Bugs
 When reporting bugs, please include:
@@ -1510,20 +1479,14 @@ If you find this project useful, please consider giving it a ⭐ on GitHub!
 
 ---
 
-## 📜 Changelog
-
-See [CHANGELOG.md](./CHANGELOG.md) for a detailed version history.
-
----
-
 <div align="center">
 
 **[⬆ Back to Top](#-shipsy---shipment-management-system)**
 
 ---
 
-Made with ❤️ by the Shipsy Team
+Made with ❤️
 
-**[Documentation](./docs/)** · **[Issues](https://github.com/YOUR_USERNAME/shipsy/issues)** · **[Discussions](https://github.com/YOUR_USERNAME/shipsy/discussions)**
+**[Documentation](./docs/)** · **[Issues](https://github.com/itsaryankaushik/shipsy/issues)** · **[Discussions](https://github.com/itsaryankaushik/shipsy/discussions)**
 
 </div>
