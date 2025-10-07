@@ -80,6 +80,7 @@ export const createMockShipment = (overrides?: Partial<ShipmentSchema>): Shipmen
     cost: '1500.00',
     calculatedTotal: '1650.00',
     isDelivered: false,
+    estimatedDeliveryDate: new Date('2026-01-08T00:00:00.000Z'),
     deliveryDate: null,
     createdAt: new Date('2025-01-01T00:00:00.000Z'),
     updatedAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -100,6 +101,7 @@ export const createMockShipments = (count: number, options?: {
       cost: ((i + 1) * 1000).toFixed(2),
       calculatedTotal: ((i + 1) * 1100).toFixed(2),
       isDelivered: options?.isDelivered ?? (i % 2 === 0),
+      estimatedDeliveryDate: new Date(`2025-01-${10 + i}T00:00:00.000Z`),
       deliveryDate: options?.isDelivered ?? (i % 2 === 0) 
         ? new Date('2025-10-01T00:00:00.000Z') 
         : null,
