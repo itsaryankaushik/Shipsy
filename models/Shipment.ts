@@ -16,6 +16,7 @@ export class Shipment {
   public readonly cost: string;
   public readonly calculatedTotal: string;
   public readonly isDelivered: boolean;
+  public readonly estimatedDeliveryDate: Date | null;
   public readonly deliveryDate: Date | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
@@ -31,6 +32,7 @@ export class Shipment {
     this.cost = data.cost;
     this.calculatedTotal = data.calculatedTotal;
     this.isDelivered = data.isDelivered;
+    this.estimatedDeliveryDate = data.estimatedDeliveryDate;
     this.deliveryDate = data.deliveryDate;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
@@ -58,6 +60,7 @@ export class Shipment {
       cost: this.cost,
       calculatedTotal: this.calculatedTotal,
       isDelivered: this.isDelivered,
+      estimatedDeliveryDate: this.estimatedDeliveryDate,
       deliveryDate: this.deliveryDate,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
